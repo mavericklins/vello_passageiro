@@ -1,0 +1,8 @@
+*.exe
+*.apk
+*.aab
+*.zip
+build/
+.dart_tool/
+.idea/
+firebase-tools-instant*.exe

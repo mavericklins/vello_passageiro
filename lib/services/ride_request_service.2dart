@@ -1,0 +1,432 @@
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:latlong2/latlong.dart';
+
+/// Serviço de solicitação de corridas integrado com Firebase - VERSÃO PADRONIZADA
+class RideRequestService {
+  static final RideRequestService _instance = RideRequestService._internal();
+  factory RideRequestService() => _instance;
+  RideRequestService._internal();
+
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  
+  // Estado da solicitação atual
+  String? _currentRideId;
+  StreamSubscription<DocumentSnapshot>? _rideSubscription;
+  
+  // Callbacks para atualizações
+  Function(String rideId, String status)? onRideStatusUpdate;
+  Function(Map<String, dynamic> driverInfo)? onDriverAssigned;
+  Function(LatLng driverLocation)? onDriverLocationUpdate;
+  Function(String message)? onRideError;
+  Function()? onRideCompleted;
+
+  /// Solicita uma nova corrida APÓS confirmação do pagamento - ESTRUTURA PADRONIZADA
+  Future<String?> requestRide({
+    required String origem,
+    required String destino,
+    required LatLng origemCoords,
+    required LatLng destinoCoords,
+    required double estimatedFare,
+    required String paymentMethod,
+    required String paymentTransactionId,
+    String? nomePassageiro,
+    String? telefonePassageiro,
+    List<String>? additionalStops,
+    List<LatLng>? additionalStopsCoords,
+    bool isSharedRide = false,
+    int maxPassengers = 1,
+  }) async {
+    try {
+      // Aguarda o usuário estar autenticado com retry
+      User? user = _auth.currentUser;
+      
+      // Se não há usuário, aguarda um pouco e tenta novamente
+      if (user == null) {
+        print('🔄 Usuário não encontrado, aguardando autenticação...');
+        await Future.delayed(Duration(milliseconds: 1000));
+        user = _auth.currentUser;
+      }
+      
+      // Se ainda não há usuário, força reautenticação
+      if (user == null) {
+        print('🔄 Forçando reautenticação...');
+        await _auth.authStateChanges().first;
+        user = _auth.currentUser;
+      }
+      
+      if (user == null) {
+        final errorMsg = 'Usuário não autenticado. Faça login novamente.';
+        print('❌ $errorMsg');
+        onRideError?.call(errorMsg);
+        return null;
+      }
+      
+      print('✅ Usuário autenticado: ${user.uid}');
+
+      // Calcula distância total
+      double totalDistance = _calculateDistance(origemCoords, destinoCoords);
+      
+      // Adiciona distância das paradas extras
+      if (additionalStops != null && additionalStopsCoords != null) {
+        LatLng currentPoint = origemCoords;
+        for (final stop in additionalStopsCoords) {
+          totalDistance += _calculateDistance(currentPoint, stop);
+          currentPoint = stop;
+        }
+        totalDistance += _calculateDistance(currentPoint, destinoCoords);
+      }
+
+      // ==================== ESTRUTURA PADRONIZADA ====================
+      // Cria documento da corrida no Firebase com estrutura padronizada
+      final rideData = {
+        // CAMPOS OBRIGATÓRIOS PADRONIZADOS
+        'id': '', // Será preenchido após criação
+        'status': 'pendente', // pendente, aceita, em_andamento, concluida, cancelada
+        'passageiroId': user.uid,
+        'motoristaId': null, // Será preenchido quando motorista aceitar
+        
+        // LOCALIZAÇÃO PADRONIZADA (objeto)
+        'origem': {
+          'endereco': origem,
+          'latitude': origemCoords.latitude,
+          'longitude': origemCoords.longitude,
+        },
+        'destino': {
+          'endereco': destino,
+          'latitude': destinoCoords.latitude,
+          'longitude': destinoCoords.longitude,
+        },
+        
+        // VALORES E DATAS PADRONIZADOS
+        'valor': estimatedFare,
+        'dataHoraSolicitacao': FieldValue.serverTimestamp(),
+        'dataHoraInicio': null, // Quando motorista aceitar
+        'dataHoraConclusao': null, // Quando finalizar
+        
+        // DADOS DO PASSAGEIRO PADRONIZADOS
+        'nomePassageiro': nomePassageiro ?? user.displayName ?? 'Usuário',
+        'telefonePassageiro': telefonePassageiro ?? user.phoneNumber ?? '',
+        
+        // DADOS DO MOTORISTA PADRONIZADOS (serão preenchidos)
+        'nomeMotorista': null,
+        'telefoneMotorista': null,
+        'placaVeiculo': null,
+        'modeloVeiculo': null,
+        
+        // CAMPOS ADICIONAIS PADRONIZADOS
+        'metodoPagamento': paymentMethod,
+        'observacoes': null,
+        'distanciaKm': totalDistance,
+        'tempoEstimadoMinutos': _estimateTime(totalDistance),
+        'avaliacaoPassageiro': null,
+        'avaliacaoMotorista': null,
+        
+        // CAMPOS DE CONTROLE
+        'criadoEm': FieldValue.serverTimestamp(),
+        'atualizadoEm': FieldValue.serverTimestamp(),
+        
+        // ==================== CAMPOS ESPECÍFICOS DO VELLO ====================
+        // Mantém compatibilidade com sistema atual
+        'emailPassageiro': user.email ?? '',
+        'origemLat': origemCoords.latitude, // Compatibilidade
+        'origemLon': origemCoords.longitude, // Compatibilidade
+        'destinoLat': destinoCoords.latitude, // Compatibilidade
+        'destinoLon': destinoCoords.longitude, // Compatibilidade
+        'distanciaEstimada': totalDistance, // Compatibilidade
+        'isCorridaCompartilhada': isSharedRide,
+        'maxPassageiros': maxPassageiros,
+        'transacaoPagamentoId': paymentTransactionId,
+        'pagamentoConfirmado': true,
+        'dataHora': FieldValue.serverTimestamp(), // Compatibilidade
+        
+        // Controle de notificações
+        'motoristasNotificados': [],
+        'motoristasRejeitados': [],
+        'tentativasNotificacao': 0,
+        
+        // Metadados
+        'versaoApp': '1.0.0',
+        'plataforma': 'android',
+      };
+
+      print('🔥 Criando corrida no Firebase com estrutura padronizada...');
+      
+      // Salva no Firestore
+      final docRef = await _firestore.collection('corridas').add(rideData);
+      
+      // Atualiza o ID no documento
+      await docRef.update({'id': docRef.id});
+      
+      _currentRideId = docRef.id;
+
+      print('✅ Corrida criada com ID: ${docRef.id}');
+      print('📍 Origem: $origem');
+      print('📍 Destino: $destino');
+      print('💰 Valor: R\$ ${estimatedFare.toStringAsFixed(2)}');
+      print('📊 Status: pendente');
+
+      // Inicia monitoramento da corrida
+      _startRideMonitoring(docRef.id);
+
+      // Busca motoristas disponíveis
+      await _findAvailableDrivers(origemCoords, estimatedFare, docRef.id);
+
+      return docRef.id;
+    } catch (e) {
+      print('❌ Erro ao solicitar corrida: $e');
+      onRideError?.call('Erro ao solicitar corrida: $e');
+      return null;
+    }
+  }
+
+  /// Busca motoristas disponíveis próximos - ESTRUTURA PADRONIZADA
+  Future<void> _findAvailableDrivers(LatLng origin, double fare, String rideId) async {
+    try {
+      print('🔍 Buscando motoristas disponíveis...');
+      
+      // Busca motoristas online com estrutura padronizada
+      final driversSnapshot = await _firestore
+          .collection('motoristas')
+          .where('status', isEqualTo: 'online') // Status padronizado
+          .where('disponivel', isEqualTo: true) // Campo padronizado
+          .get();
+
+      final availableDrivers = <Map<String, dynamic>>[];
+
+      for (final driverDoc in driversSnapshot.docs) {
+        final driverData = driverDoc.data();
+        
+        // Busca localização na estrutura padronizada
+        double? lat, lng;
+        
+        // Tenta estrutura padronizada primeiro
+        if (driverData['localizacao'] != null) {
+          lat = driverData['localizacao']['latitude']?.toDouble();
+          lng = driverData['localizacao']['longitude']?.toDouble();
+        }
+        
+        // Fallback para estrutura antiga
+        if (lat == null || lng == null) {
+          lat = driverData['latitude']?.toDouble();
+          lng = driverData['longitude']?.toDouble();
+        }
+        
+        // Fallback para localizacaoAtual
+        if (lat == null || lng == null) {
+          final location = driverData['localizacaoAtual'];
+          if (location != null) {
+            lat = location['latitude']?.toDouble();
+            lng = location['longitude']?.toDouble();
+          }
+        }
+        
+        if (lat != null && lng != null) {
+          final driverCoords = LatLng(lat, lng);
+          final distance = _calculateDistance(origin, driverCoords);
+          
+          // Motorista dentro do raio de 15km
+          if (distance <= 15.0) {
+            availableDrivers.add({
+              'id': driverDoc.id,
+              'data': driverData,
+              'distance': distance,
+            });
+          }
+        }
+      }
+
+      // Ordena por distância
+      availableDrivers.sort((a, b) => a['distance'].compareTo(b['distance']));
+
+      print('📱 Encontrados ${availableDrivers.length} motoristas próximos');
+
+      if (availableDrivers.isEmpty) {
+        // Nenhum motorista disponível
+        await _updateRideStatus(rideId, 'sem_motoristas');
+        onRideError?.call('Nenhum motorista disponível no momento');
+        return;
+      }
+
+      // Notifica os 3 motoristas mais próximos
+      final driversToNotify = availableDrivers.take(3).toList();
+      
+      // Atualiza lista de motoristas notificados
+      await _firestore.collection('corridas').doc(rideId).update({
+        'motoristasNotificados': driversToNotify.map((d) => d['id']).toList(),
+        'tentativasNotificacao': FieldValue.increment(1),
+        'atualizadoEm': FieldValue.serverTimestamp(),
+      });
+
+      // Envia notificações para os motoristas
+      for (final driver in driversToNotify) {
+        await _notifyDriver(
+          driverId: driver['id'],
+          rideId: rideId,
+          origin: origin,
+          fare: fare,
+          distance: driver['distance'],
+        );
+      }
+
+      print('🔔 Notificações enviadas para ${driversToNotify.length} motoristas');
+      
+    } catch (e) {
+      print('❌ Erro ao buscar motoristas: $e');
+      onRideError?.call('Erro ao buscar motoristas disponíveis');
+    }
+  }
+
+  /// Notifica um motorista sobre nova corrida
+  Future<void> _notifyDriver({
+    required String driverId,
+    required String rideId,
+    required LatLng origin,
+    required double fare,
+    required double distance,
+  }) async {
+    try {
+      // Cria notificação na subcoleção do motorista
+      await _firestore
+          .collection('motoristas')
+          .doc(driverId)
+          .collection('notificacoes_corridas')
+          .doc(rideId)
+          .set({
+        'corridaId': rideId,
+        'tipo': 'nova_corrida',
+        'valor': fare,
+        'distanciaAtePassageiro': distance,
+        'criadaEm': FieldValue.serverTimestamp(),
+        'expiresAt': DateTime.now().add(Duration(minutes: 2)), // Expira em 2 minutos
+        'status': 'pendente', // pendente, aceita, rejeitada, expirada
+      });
+
+      print('🔔 Notificação enviada para motorista $driverId');
+      
+    } catch (e) {
+      print('❌ Erro ao notificar motorista $driverId: $e');
+    }
+  }
+
+  /// Inicia monitoramento da corrida - ESTRUTURA PADRONIZADA
+  void _startRideMonitoring(String rideId) {
+    _rideSubscription?.cancel();
+    
+    _rideSubscription = _firestore
+        .collection('corridas')
+        .doc(rideId)
+        .snapshots()
+        .listen((snapshot) {
+      if (!snapshot.exists) return;
+      
+      final data = snapshot.data()!;
+      final status = data['status'] as String;
+      
+      print('📊 Status da corrida atualizado: $status');
+      
+      onRideStatusUpdate?.call(rideId, status);
+      
+      switch (status) {
+        case 'aceita':
+        case 'em_andamento':
+          // Motorista aceitou - estrutura padronizada
+          if (data['motoristaId'] != null) {
+            onDriverAssigned?.call({
+              'id': data['motoristaId'],
+              'nome': data['nomeMotorista'],
+              'telefone': data['telefoneMotorista'],
+              'placa': data['placaVeiculo'],
+              'modelo': data['modeloVeiculo'],
+            });
+          }
+          break;
+          
+        case 'concluida':
+          onRideCompleted?.call();
+          _rideSubscription?.cancel();
+          _currentRideId = null;
+          break;
+          
+        case 'cancelada':
+          onRideError?.call('Corrida cancelada');
+          _rideSubscription?.cancel();
+          _currentRideId = null;
+          break;
+      }
+    });
+  }
+
+  /// Atualiza status da corrida - ESTRUTURA PADRONIZADA
+  Future<void> _updateRideStatus(String rideId, String status) async {
+    try {
+      final updates = <String, dynamic>{
+        'status': status,
+        'atualizadoEm': FieldValue.serverTimestamp(),
+      };
+
+      // Se for conclusão, adicionar data
+      if (status == 'concluida' || status == 'cancelada') {
+        updates['dataHoraConclusao'] = FieldValue.serverTimestamp();
+      }
+
+      await _firestore.collection('corridas').doc(rideId).update(updates);
+    } catch (e) {
+      print('❌ Erro ao atualizar status: $e');
+    }
+  }
+
+  /// Cancela corrida atual - ESTRUTURA PADRONIZADA
+  Future<void> cancelCurrentRide({String? reason}) async {
+    if (_currentRideId == null) return;
+    
+    try {
+      await _firestore.collection('corridas').doc(_currentRideId!).update({
+        'status': 'cancelada',
+        'motivoCancelamento': reason ?? 'Cancelado pelo passageiro',
+        'canceladoEm': FieldValue.serverTimestamp(),
+        'dataHoraConclusao': FieldValue.serverTimestamp(),
+        'atualizadoEm': FieldValue.serverTimestamp(),
+      });
+      
+      _rideSubscription?.cancel();
+      _currentRideId = null;
+      
+      print('❌ Corrida cancelada');
+      
+    } catch (e) {
+      print('❌ Erro ao cancelar corrida: $e');
+    }
+  }
+
+  /// Estima tempo de viagem em minutos
+  int _estimateTime(double distanceKm) {
+    // Velocidade média urbana: 25 km/h
+    final timeHours = distanceKm / 25.0;
+    return (timeHours * 60).round();
+  }
+
+  /// Calcula distância entre dois pontos em km
+  double _calculateDistance(LatLng point1, LatLng point2) {
+    return Geolocator.distanceBetween(
+      point1.latitude,
+      point1.longitude,
+      point2.latitude,
+      point2.longitude,
+    ) / 1000; // Converte para km
+  }
+
+  /// Limpa recursos
+  void dispose() {
+    _rideSubscription?.cancel();
+  }
+
+  /// Getters
+  String? get currentRideId => _currentRideId;
+  bool get hasActiveRide => _currentRideId != null;
+}
+

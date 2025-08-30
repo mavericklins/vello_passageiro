@@ -1,0 +1,704 @@
+import 'package:flutter/material.dart';
+import '../../models/address_model.dart';
+import '../../services/pricing_service.dart';
+import '../../services/schedule_service.dart';
+import '../../services/promotions_service.dart';
+import '../../theme/vello_tokens.dart';
+
+class ScheduleRideScreen extends StatefulWidget {
+  final AddressModel origin;
+  final AddressModel destination;
+  final List<AddressModel> waypoints;
+  final VehicleType selectedVehicleType;
+  final PriceEstimate priceEstimate;
+  final Promotion? appliedCoupon;
+  
+  const ScheduleRideScreen({
+    Key? key,
+    required this.origin,
+    required this.destination,
+    required this.waypoints,
+    required this.selectedVehicleType,
+    required this.priceEstimate,
+    this.appliedCoupon,
+  }) : super(key: key);
+  
+  @override
+  State<ScheduleRideScreen> createState() => _ScheduleRideScreenState();
+}
+
+class _ScheduleRideScreenState extends State<ScheduleRideScreen> {
+  DateTime _selectedDate = DateTime.now().add(Duration(hours: 1));
+  TimeOfDay _selectedTime = TimeOfDay.now();
+  final TextEditingController _notesController = TextEditingController();
+  bool _isScheduling = false;
+  
+  // Cores da identidade visual Vello
+  static const Color velloBlue = VelloTokens.brandBlue;
+  static const Color velloOrange = VelloTokens.brandOrange;
+  static const Color velloLightGray = VelloTokens.grayLight;
+  
+  @override
+  void initState() {
+    super.initState();
+    // Definir horário mínimo como próxima hora
+    final now = DateTime.now();
+    _selectedTime = TimeOfDay(hour: now.hour + 1, minute: 0);
+  }
+  
+  @override
+  void dispose() {
+    _notesController.dispose();
+    super.dispose();
+  }
+  
+  DateTime get _scheduledDateTime {
+    return DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+      _selectedTime.hour,
+      _selectedTime.minute,
+    );
+  }
+  
+  bool get _canSchedule {
+    final now = DateTime.now();
+    return _scheduledDateTime.isAfter(now.add(Duration(minutes: 30)));
+  }
+  
+  Future<void> _selectDate() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: now,
+      lastDate: now.add(Duration(days: 30)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: velloOrange,
+              onPrimary: VelloTokens.white,
+              surface: VelloTokens.white,
+              onSurface: velloBlue,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    
+    if (picked != null) {
+      setState(() {
+        _selectedDate = picked;
+      });
+    }
+  }
+  
+  Future<void> _selectTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _selectedTime,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: velloOrange,
+              onPrimary: VelloTokens.white,
+              surface: VelloTokens.white,
+              onSurface: velloBlue,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    
+    if (picked != null) {
+      setState(() {
+        _selectedTime = picked;
+      });
+    }
+  }
+  
+  Future<void> _scheduleRide() async {
+    if (!_canSchedule) return;
+    
+    setState(() {
+      _isScheduling = true;
+    });
+    
+    try {
+      final rideId = await ScheduleService.scheduleRide(
+        origin: widget.origin,
+        destination: widget.destination,
+        waypoints: widget.waypoints,
+        scheduledTime: _scheduledDateTime,
+        vehicleType: widget.selectedVehicleType,
+        estimatedPrice: widget.priceEstimate.finalPrice,
+        notes: _notesController.text.trim().isNotEmpty ? _notesController.text.trim() : null,
+        couponCode: widget.appliedCoupon?.code,
+      );
+      
+      if (rideId != null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Corrida agendada com sucesso!'),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          Navigator.of(context).popUntil((route) => route.isFirst);
+        }
+      } else {
+        throw Exception('Falha ao agendar corrida');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao agendar corrida: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isScheduling = false;
+        });
+      }
+    }
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: velloLightGray,
+      appBar: AppBar(
+        title: const Text(
+          'Agendar Corrida',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: VelloTokens.white,
+        elevation: 0,
+        foregroundColor: velloBlue,
+        leading: IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: velloOrange.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(
+              Icons.arrow_back,
+              color: velloOrange,
+              size: 20,
+            ),
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Resumo da corrida
+            _buildRideSummaryCard(),
+            
+            const SizedBox(height: 16),
+            
+            // Seleção de data e hora
+            _buildDateTimeCard(),
+            
+            const SizedBox(height: 16),
+            
+            // Observações
+            _buildNotesCard(),
+            
+            const SizedBox(height: 24),
+            
+            // Botão de confirmar
+            _buildConfirmButton(),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildRideSummaryCard() {
+    return Container(
+      decoration: BoxDecoration(
+        color: VelloTokens.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: VelloTokens.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: velloBlue.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.route,
+                    color: velloBlue,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  'Resumo da Corrida',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: velloBlue,
+                  ),
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: 16),
+            
+            // Origem
+            _buildLocationRow(
+              icon: Icons.my_location,
+              iconColor: velloBlue,
+              label: 'Origem',
+              address: widget.origin.shortAddress,
+            ),
+            
+            const SizedBox(height: 12),
+            
+            // Paradas
+            if (widget.waypoints.isNotEmpty) ...[
+              ...widget.waypoints.asMap().entries.map((entry) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _buildLocationRow(
+                    icon: Icons.add_location_alt,
+                    iconColor: Colors.green,
+                    label: 'Parada ${entry.key + 1}',
+                    address: entry.value.shortAddress,
+                  ),
+                );
+              }),
+            ],
+            
+            // Destino
+            _buildLocationRow(
+              icon: Icons.location_on,
+              iconColor: velloOrange,
+              label: 'Destino',
+              address: widget.destination.shortAddress,
+            ),
+            
+            const SizedBox(height: 16),
+            
+            const Divider(),
+            
+            const SizedBox(height: 16),
+            
+            // Detalhes do veículo e preço
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.selectedVehicleType.name,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: velloBlue,
+                        ),
+                      ),
+                      Text(
+                        widget.selectedVehicleType.description,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        widget.priceEstimate.formattedDistance,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[500],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      widget.priceEstimate.formattedPrice,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: velloOrange,
+                      ),
+                    ),
+                    if (widget.appliedCoupon != null) ...[
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.green[50],
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.green[200]!),
+                        ),
+                        child: Text(
+                          widget.appliedCoupon!.formattedDiscount,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green[700],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildLocationRow({
+    required IconData icon,
+    required Color iconColor,
+    required String label,
+    required String address,
+  }) {
+    return Row(
+      children: [
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: iconColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Icon(
+            icon,
+            color: iconColor,
+            size: 16,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey[600],
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                address,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: velloBlue,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildDateTimeCard() {
+    return Container(
+      decoration: BoxDecoration(
+        color: VelloTokens.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: VelloTokens.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: velloOrange.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.schedule,
+                    color: velloOrange,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  'Quando você quer viajar?',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: velloBlue,
+                  ),
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: 20),
+            
+            Row(
+              children: [
+                Expanded(
+                  child: _buildDateTimeSelector(
+                    title: 'Data',
+                    value: '${_selectedDate.day.toString().padLeft(2, '0')}/${_selectedDate.month.toString().padLeft(2, '0')}/${_selectedDate.year}',
+                    icon: Icons.calendar_today,
+                    onTap: _selectDate,
+                  ),
+                ),
+                
+                const SizedBox(width: 16),
+                
+                Expanded(
+                  child: _buildDateTimeSelector(
+                    title: 'Horário',
+                    value: _selectedTime.format(context),
+                    icon: Icons.access_time,
+                    onTap: _selectTime,
+                  ),
+                ),
+              ],
+            ),
+            
+            if (!_canSchedule) ...[
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.orange[50],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.orange[200]!),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.warning_amber, color: Colors.orange[700], size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'O agendamento deve ser feito com pelo menos 30 minutos de antecedência.',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.orange[700],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildDateTimeSelector({
+    required String title,
+    required String value,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: velloLightGray,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[200]!),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, color: velloBlue, size: 16),
+                const SizedBox(width: 8),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: velloBlue,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildNotesCard() {
+    return Container(
+      decoration: BoxDecoration(
+        color: VelloTokens.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: VelloTokens.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.note_add,
+                    color: Colors.blue,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  'Observações (opcional)',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: velloBlue,
+                  ),
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: 16),
+            
+            TextField(
+              controller: _notesController,
+              maxLines: 3,
+              decoration: InputDecoration(
+                hintText: 'Adicione observações para o motorista...',
+                hintStyle: TextStyle(color: Colors.grey[500]),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey[200]!),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: velloOrange, width: 2),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey[200]!),
+                ),
+                filled: true,
+                fillColor: velloLightGray,
+                contentPadding: const EdgeInsets.all(16),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildConfirmButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 56,
+      child: ElevatedButton(
+        onPressed: (_canSchedule && !_isScheduling) ? _scheduleRide : null,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: (_canSchedule && !_isScheduling) ? velloOrange : Colors.grey[400],
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          elevation: (_canSchedule && !_isScheduling) ? 8 : 0,
+        ),
+        child: _isScheduling
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  color: VelloTokens.white,
+                  strokeWidth: 2,
+                ),
+              )
+            : const Text(
+                'Confirmar Agendamento',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: VelloTokens.white,
+                ),
+              ),
+      ),
+    );
+  }
+}
+
+

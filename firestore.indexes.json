@@ -1,0 +1,64 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "corridas",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {"fieldPath": "status", "order": "ASCENDING"},
+        {"fieldPath": "dataHoraSolicitacao", "order": "DESCENDING"}
+      ]
+    },
+    {
+      "collectionGroup": "corridas",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {"fieldPath": "passageiroId", "order": "ASCENDING"},
+        {"fieldPath": "dataHoraSolicitacao", "order": "DESCENDING"}
+      ]
+    },
+    {
+      "collectionGroup": "corridas",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {"fieldPath": "motoristaId", "order": "ASCENDING"},
+        {"fieldPath": "dataHoraSolicitacao", "order": "DESCENDING"}
+      ]
+    },
+    {
+      "collectionGroup": "motoristas",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {"fieldPath": "status", "order": "ASCENDING"},
+        {"fieldPath": "localizacaoAtual.geohash", "order": "ASCENDING"}
+      ]
+    },
+    {
+      "collectionGroup": "motoristas",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {"fieldPath": "ativo", "order": "ASCENDING"},
+        {"fieldPath": "verificado", "order": "ASCENDING"},
+        {"fieldPath": "status", "order": "ASCENDING"}
+      ]
+    },
+    {
+      "collectionGroup": "notificacoes_motorista",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {"fieldPath": "motoristaId", "order": "ASCENDING"},
+        {"fieldPath": "lida", "order": "ASCENDING"},
+        {"fieldPath": "criadaEm", "order": "DESCENDING"}
+      ]
+    },
+    {
+      "collectionGroup": "notificacoes_passageiro",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {"fieldPath": "passageiroId", "order": "ASCENDING"},
+        {"fieldPath": "lida", "order": "ASCENDING"},
+        {"fieldPath": "criadaEm", "order": "DESCENDING"}
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

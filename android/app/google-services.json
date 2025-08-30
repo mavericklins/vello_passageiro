@@ -1,0 +1,67 @@
+{
+  "project_info": {
+    "project_number": "694167397444",
+    "project_id": "vello-dac50",
+    "storage_bucket": "vello-dac50.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:694167397444:android:50424e1f8e7e0037b6c811",
+        "android_client_info": {
+          "package_name": "com.vello.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB-fVWOzdLDXbxuTO38GRMV4TYCo9-vVR4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:694167397444:android:4465fc32a5ab1488b6c811",
+        "android_client_info": {
+          "package_name": "com.vello.motorista"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB-fVWOzdLDXbxuTO38GRMV4TYCo9-vVR4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:694167397444:android:3dfe314db89f3ba8b6c811",
+        "android_client_info": {
+          "package_name": "com.vello.motorista.vello_motorista"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB-fVWOzdLDXbxuTO38GRMV4TYCo9-vVR4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

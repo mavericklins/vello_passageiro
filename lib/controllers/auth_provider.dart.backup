@@ -1,0 +1,34 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+class AuthProvider with ChangeNotifier {
+  User? _usuario;
+  String _nomeUsuario = '';
+  Map<String, dynamic> _dadosUsuario = {};
+
+  User? get usuario => _usuario;
+  String get nomeUsuario => _nomeUsuario;
+  Map<String, dynamic> get dadosUsuario => _dadosUsuario;
+
+  void setUsuario(User? user) {
+    _usuario = user;
+    notifyListeners();
+  }
+
+  void limparUsuario() {
+    _usuario = null;
+    _nomeUsuario = '';
+    _dadosUsuario = {};
+    notifyListeners();
+  }
+
+  void setNomeUsuario(String nome) {
+    _nomeUsuario = nome;
+    notifyListeners();
+  }
+
+  void setDadosUsuario(Map<String, dynamic> dados) {
+    _dadosUsuario = dados;
+    notifyListeners();
+  }
+}

@@ -1,0 +1,131 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() { return request.auth != null; }
+    function uid() { return request.auth.uid; }
+    function claim(c) { return request.auth.token[c] == true || request.auth.token[c]; }
+    function tipo() { return request.auth.token.tipo; }
+    function isAdmin() { return claim('admin') || tipo() == 'admin'; }
+
+    // Util
+    function createdAtValid() { return request.time - request.resource.data.criadoEm < duration.value(1, 'm'); }
+
+    // ========================= usuarios =========================
+    match /usuarios/{userId} {
+      allow read: if isSignedIn() && (isAdmin() || userId == uid());
+      allow create: if isSignedIn() && userId == uid();
+      allow update: if isSignedIn() && (isAdmin() || userId == uid());
+      allow delete: if isAdmin();
+    }
+
+    // ========================= passageiros ======================
+    match /passageiros/{userId} {
+      allow read: if isSignedIn() && (isAdmin() || userId == uid());
+      allow write: if isSignedIn() && (isAdmin() || userId == uid());
+    }
+
+    // ========================= motoristas =======================
+    match /motoristas/{userId} {
+      allow read: if isSignedIn(); // visível para listagens/seleção (cuidado: filtre server-side)
+      allow create: if isSignedIn() && userId == uid();
+      allow update: if isSignedIn() && (isAdmin() || userId == uid());
+      allow delete: if isAdmin();
+
+      // subcollection para localização em tempo real (opcional)
+      match /localizacao/{doc} {
+        allow read: if isSignedIn();
+        allow write: if isSignedIn() && (isAdmin() || resource == null || request.resource.data.userId == uid());
+      }
+    }
+
+    // ========================= corridas =========================
+    match /corridas/{corridaId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.passageiroId == uid();
+      allow update: if isSignedIn() && (
+        isAdmin() ||
+        (request.resource.data.passageiroId == uid()) ||
+        (request.resource.data.motoristaId == uid())
+      );
+      allow delete: if isAdmin();
+
+      // chat como subcoleção para escalar
+      match /mensagens/{msgId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn() && (
+          request.resource.data.remetenteId == uid()
+        );
+        allow update, delete: if isAdmin();
+      }
+    }
+
+    // ======== notificações (TTL em expiresAt) ========
+    match /notificacoes_passageiro/{id} {
+      allow read: if isSignedIn() && (isAdmin() || resource.data.passageiroId == uid());
+      allow create: if isAdmin();
+      allow update: if isSignedIn() && (isAdmin() || (resource.data.passageiroId == uid()));
+      allow delete: if isAdmin();
+    }
+
+    match /notificacoes_motorista/{id} {
+      allow read: if isSignedIn() && (isAdmin() || resource.data.motoristaId == uid());
+      allow create: if isAdmin();
+      allow update: if isSignedIn() && (isAdmin() || (resource.data.motoristaId == uid()));
+      allow delete: if isAdmin();
+    }
+
+    // ========================= pagamentos =======================
+    match /pagamentos/{id} {
+      allow read: if isSignedIn() && (isAdmin() || resource.data.passageiroId == uid() || resource.data.motoristaId == uid());
+      allow create: if isAdmin(); // criado pelo backend
+      allow update, delete: if isAdmin();
+    }
+
+    // ========================= avaliacoes ========================
+    match /avaliacoes/{id} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.avaliadorId == uid();
+      allow update, delete: if isAdmin();
+    }
+
+    // ========================= historico_localizacao ============
+    match /historico_localizacao/{id} {
+      allow read: if isAdmin();
+      allow create: if isAdmin();
+      allow update, delete: if isAdmin();
+    }
+
+    // ========================= emergencias ======================
+    match /emergencias/{id} {
+      allow read: if isSignedIn() && (isAdmin() || resource.data.usuarioId == uid());
+      allow create: if isSignedIn() && request.resource.data.usuarioId == uid();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ========================= compartilhamento_viagem =========
+    match /compartilhamento_viagem/{id} {
+      allow read, write: if isAdmin(); // links públicos gerados via CF
+    }
+
+    // ========================= suporte ==========================
+    match /suporte/{id} {
+      allow read: if isSignedIn() && (isAdmin() || resource.data.usuarioId == uid());
+      allow create: if isSignedIn() && request.resource.data.usuarioId == uid();
+      allow update: if isSignedIn() && (isAdmin() || resource.data.usuarioId == uid());
+      allow delete: if isAdmin();
+    }
+
+    // ========================= configuracoes_app / promocoes_cupons =====
+    match /configuracoes_app/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /promocoes_cupons/{id} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+  }
+}
