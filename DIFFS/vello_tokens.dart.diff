@@ -1,0 +1,357 @@
+--- /app/lib/theme/vello_tokens.dart	2025-08-30 20:58:54.368548874 +0000
++++ lib/theme/vello_tokens.dart	2025-08-30 21:01:29.348532899 +0000
+@@ -1,5 +1,4 @@
+ import 'package:flutter/material.dart';
+-import './vello_tokens.dart';
+ 
+ /// Design Tokens Vello - Sistema Unificado de Tokens
+ /// Fonte única para todas as cores, espaçamentos e elevações do app
+@@ -10,121 +9,122 @@
+ /// - Material 3 ColorScheme integrado
+ class VelloTokens {
+   // ========== BRAND COLORS ==========
+-  // Cores principais da marca Vello
+-  static const Color brand = VelloTokens.brand;  // Laranja principal
+-  static const Color brandLight = VelloTokens.brandLight;
+-  static const Color brandDark = VelloTokens.brandDark;
++  // CORREÇÃO: Remover auto-referências, usar valores literais
++  static const Color brand = Color(0xFFFF6B35);  // Laranja principal
++  static const Color brandLight = Color(0xFFFF8A65);
++  static const Color brandDark = Color(0xFFE64A19);
+   
+   // Variações específicas encontradas no código
+-  static const Color brandOrange = VelloTokens.brandOrange;    // De app_colors.dart
+-  static const Color brandOrangeDark = VelloTokens.brandOrangeDark;
+-  static const Color brandOrangeLight = VelloTokens.brandOrangeLight;
+-  static const Color brandOrangeTransparent = VelloTokens.brandOrangeTransparent;
++  static const Color brandOrange = Color(0xFFFF6B35);    // De app_colors.dart
++  static const Color brandOrangeDark = Color(0xFFE64A19);
++  static const Color brandOrangeLight = Color(0xFFFF8A65);
++  static const Color brandOrangeTransparent = Color(0x80FF6B35);
+   
+   // ========== SECONDARY COLORS ==========
+   // Cores secundárias - Azul
+-  static const Color secondary = VelloTokens.secondary;
+-  static const Color secondaryLight = VelloTokens.secondaryLight;
+-  static const Color secondaryDark = VelloTokens.secondaryDark;
++  static const Color secondary = Color(0xFF1976D2);
++  static const Color secondaryLight = Color(0xFF42A5F5);
++  static const Color secondaryDark = Color(0xFF0D47A1);
+   
+   // Variações azul encontradas
+-  static const Color brandBlue = VelloTokens.brandBlue;      // De app_colors.dart
+-  static const Color brandBlueDark = VelloTokens.brandBlueDark;
+-  static const Color brandBlueLight = VelloTokens.brandBlueLight;
+-  static const Color brandBlueAlt = VelloTokens.brandBlueAlt;   // Variação encontrada
++  static const Color brandBlue = Color(0xFF1976D2);      // De app_colors.dart
++  static const Color brandBlueDark = Color(0xFF0D47A1);
++  static const Color brandBlueLight = Color(0xFF42A5F5);
++  static const Color brandBlueAlt = Color(0xFF2196F3);   // Variação encontrada
+ 
+   // ========== SEMANTIC COLORS ==========
+   // Cores semânticas padronizadas
+-  static const Color success = VelloTokens.success;
+-  static const Color successLight = VelloTokens.successLight;
+-  static const Color successDark = VelloTokens.successDark;
++  static const Color success = Color(0xFF4CAF50);
++  static const Color successLight = Color(0xFF81C784);
++  static const Color successDark = Color(0xFF388E3C);
+   static const Color successContainer = Color(0xFFE8F5E8);
+   static const Color onSuccessContainer = Color(0xFF1B5E20);
+   
+   // Variações de sucesso
+   static const Color successGreen = Color(0xFF28A745);    // De app_colors.dart
+-  static const Color successAlt = VelloTokens.successAlt;      // De vello_colors.dart
++  static const Color successAlt = Color(0xFF4CAF50);      // De vello_colors.dart
+ 
+-  static const Color warning = VelloTokens.warning;
+-  static const Color warningLight = VelloTokens.warningLight;
+-  static const Color warningDark = VelloTokens.warningDark;
++  static const Color warning = Color(0xFFFFC107);
++  static const Color warningLight = Color(0xFFFFD54F);
++  static const Color warningDark = Color(0xFFF57F17);
+   static const Color warningContainer = Color(0xFFFFF3E0);
+   static const Color onWarningContainer = Color(0xFFE65100);
+   
+   // Variações de warning
+-  static const Color warningYellow = VelloTokens.rating;   // De app_colors.dart
+-  static const Color warningOrange = VelloTokens.warningOrange;   // De vello_colors.dart
++  static const Color warningYellow = Color(0xFFFFC107);   // De app_colors.dart
++  static const Color warningOrange = Color(0xFFFF9800);   // De vello_colors.dart
+ 
+-  static const Color danger = VelloTokens.danger;
+-  static const Color dangerLight = VelloTokens.dangerLight;
+-  static const Color dangerDark = VelloTokens.dangerDark;
++  static const Color danger = Color(0xFFE53935);
++  static const Color dangerLight = Color(0xFFEF5350);
++  static const Color dangerDark = Color(0xFFC62828);
+   static const Color dangerContainer = Color(0xFFFFDAD4);
+   static const Color onDangerContainer = Color(0xFF410002);
+   
+   // Variações de erro
+-  static const Color error = VelloTokens.error;           // Principal
++  static const Color error = Color(0xFFE53935);           // Principal
+   static const Color errorRed = Color(0xFFDC3545);        // De app_colors.dart
+-  static const Color errorEmergency = VelloTokens.errorEmergency;  // Emergência
++  static const Color errorEmergency = Color(0xFFD32F2F);  // Emergência
+ 
+-  static const Color info = VelloTokens.info;
+-  static const Color infoLight = VelloTokens.infoLight;
+-  static const Color infoDark = VelloTokens.infoDark;
++  // CORREÇÃO: Definir 'info' apenas uma vez para evitar duplicata
++  static const Color info = Color(0xFF2196F3);
++  static const Color infoLight = Color(0xFF64B5F6);
++  static const Color infoDark = Color(0xFF1565C0);
+   
+   // Variações de info
+   static const Color infoCyan = Color(0xFF17A2B8);        // De app_colors.dart
+ 
+   // ========== NEUTRAL COLORS ==========
+   // Escala de cinza padronizada
+-  static const Color white = VelloTokens.white;
+-  static const Color black = VelloTokens.black;
++  static const Color white = Color(0xFFFFFFFF);
++  static const Color black = Color(0xFF000000);
+   
+-  static const Color gray50 = VelloTokens.gray50;
+-  static const Color gray100 = VelloTokens.gray100;
+-  static const Color gray200 = VelloTokens.gray200;
+-  static const Color gray300 = VelloTokens.gray300;
+-  static const Color gray400 = VelloTokens.gray400;
+-  static const Color gray500 = VelloTokens.gray500;
+-  static const Color gray600 = VelloTokens.gray600;
+-  static const Color gray700 = VelloTokens.gray700;
+-  static const Color gray800 = VelloTokens.gray800;
+-  static const Color gray900 = VelloTokens.gray900;
++  static const Color gray50 = Color(0xFFFAFAFA);
++  static const Color gray100 = Color(0xFFF5F5F5);
++  static const Color gray200 = Color(0xFFEEEEEE);
++  static const Color gray300 = Color(0xFFE0E0E0);
++  static const Color gray400 = Color(0xFFBDBDBD);
++  static const Color gray500 = Color(0xFF9E9E9E);
++  static const Color gray600 = Color(0xFF757575);
++  static const Color gray700 = Color(0xFF616161);
++  static const Color gray800 = Color(0xFF424242);
++  static const Color gray900 = Color(0xFF212121);
+   
+   // Variações de cinza encontradas no código
+-  static const Color grayLight = VelloTokens.grayLight;       // De app_colors.dart
+-  static const Color grayAlt = VelloTokens.grayAlt;         // De vello_colors.dart
+-  static const Color grayDisabled = VelloTokens.grayDisabled;
+-  static const Color grayShadow = VelloTokens.grayShadow;
+-  static const Color grayScrim = VelloTokens.grayTransparent;
+-  static const Color grayTransparent = VelloTokens.grayTransparent; // pretoTransparente
++  static const Color grayLight = Color(0xFFF5F5F5);       // De app_colors.dart
++  static const Color grayAlt = Color(0xFF9E9E9E);         // De vello_colors.dart
++  static const Color grayDisabled = Color(0xFFBDBDBD);
++  static const Color grayShadow = Color(0xFF424242);
++  static const Color grayScrim = Color(0x80000000);
++  static const Color grayTransparent = Color(0x80000000); // pretoTransparente
+   
+   // Escala adicional encontrada
+-  static const Color gray_100 = VelloTokens.grayLight;        // app_colors format
++  static const Color gray_100 = Color(0xFFF5F5F5);        // app_colors format
+   static const Color gray_200 = Color(0xFFE9ECEF);
+   static const Color gray_300 = Color(0xFFDEE2E6);
+   static const Color gray_400 = Color(0xFFCED4DA);
+   static const Color gray_500 = Color(0xFFADB5BD);
+   static const Color gray_600 = Color(0xFF6C757D);
+-  static const Color gray_700 = VelloTokens.gray_700;
++  static const Color gray_700 = Color(0xFF616161);
+   static const Color gray_800 = Color(0xFF343A40);
+-  static const Color gray_900 = VelloTokens.gray_900;
++  static const Color gray_900 = Color(0xFF212121);
+ 
+   // ========== SURFACE COLORS ==========
+   // Cores de superfície Material 3
+-  static const Color surface = VelloTokens.white;
+-  static const Color surfaceVariant = VelloTokens.surfaceVariant;
+-  static const Color surfaceContainer = VelloTokens.surfaceContainer;
++  static const Color surface = Color(0xFFFFFFFF);
++  static const Color surfaceVariant = Color(0xFFF5F5F5);
++  static const Color surfaceContainer = Color(0xFFEEEEEE);
+   static const Color surfaceContainerLow = Color(0xFFF8F9FB);
+   static const Color surfaceContainerHigh = Color(0xFFE8EBF0);
+-  static const Color surfaceContainerHighest = VelloTokens.surfaceContainerHighest;
++  static const Color surfaceContainerHighest = Color(0xFFE0E0E0);
+   
+-  static const Color onSurface = VelloTokens.onSurface;
+-  static const Color onSurfaceVariant = VelloTokens.onSurfaceVariant;
+-  static const Color onBackground = VelloTokens.onSurface;
++  static const Color onSurface = Color(0xFF212121);
++  static const Color onSurfaceVariant = Color(0xFF757575);
++  static const Color onBackground = Color(0xFF212121);
+   
+   // Backgrounds
+-  static const Color background = VelloTokens.white;
+-  static const Color backgroundSecondary = VelloTokens.grayLight;
+-  static const Color backgroundCream = VelloTokens.backgroundCream;    // creme
++  static const Color background = Color(0xFFFFFFFF);
++  static const Color backgroundSecondary = Color(0xFFF5F5F5);
++  static const Color backgroundCream = Color(0xFFFFFBF0);    // creme
+ 
+   // ========== DARK THEME COLORS ==========
+   static const Color darkSurface = Color(0xFF0A0A0B);
+@@ -134,36 +134,40 @@
+ 
+   // ========== SPECIAL COLORS ==========
+   // Cores especiais e utilitárias
+-  static const Color rating = VelloTokens.rating;          // Estrelas de avaliação
+-  static const Color divider = VelloTokens.divider;         // Divisores
+-  static const Color emergencyLight = VelloTokens.emergencyLight;  // Fundo emergência
++  static const Color rating = Color(0xFFFFC107);          // Estrelas de avaliação
++  static const Color divider = Color(0xFFE0E0E0);         // Divisores
++  static const Color emergencyLight = Color(0xFFFFDAD4);  // Fundo emergência
+   
+   // Glass Effect
+-  static const Color glassBackground = VelloTokens.glassBackground;
+-  static const Color glassBackgroundDark = VelloTokens.glassBackgroundDark;
++  static const Color glassBackground = Color(0x80FFFFFF);
++  static const Color glassBackgroundDark = Color(0x80000000);
+   
++  // CORREÇÃO: Definir cores faltantes como white70 etc.
++  static const Color white70 = Color(0xB3FFFFFF); // 70% opacidade do branco
++  static const Color white54 = Color(0x8AFFFFFF); // 54% opacidade do branco
++
+   // ========== GRADIENTS ==========
+   // Gradientes padronizados
+   static const LinearGradient gradientPrimary = LinearGradient(
+-    colors: [brand, brandLight],
++    colors: [Color(0xFFFF6B35), Color(0xFFFF8A65)],
+     begin: Alignment.topLeft,
+     end: Alignment.bottomRight,
+   );
+   
+   static const LinearGradient gradientSecondary = LinearGradient(
+-    colors: [secondary, secondaryLight],
++    colors: [Color(0xFF1976D2), Color(0xFF42A5F5)],
+     begin: Alignment.topLeft,
+     end: Alignment.bottomRight,
+   );
+   
+   static const LinearGradient gradientSuccess = LinearGradient(
+-    colors: [success, successLight],
++    colors: [Color(0xFF4CAF50), Color(0xFF81C784)],
+     begin: Alignment.topLeft,
+     end: Alignment.bottomRight,
+   );
+   
+   static const LinearGradient gradientEmergency = LinearGradient(
+-    colors: [error, VelloTokens.errorEmergency],
++    colors: [Color(0xFFE53935), Color(0xFFD32F2F)],
+     begin: Alignment.topLeft,
+     end: Alignment.bottomRight,
+   );
+@@ -173,35 +177,36 @@
+   // Estes devem ser gradualmente substituídos pelos tokens principais
+   
+   // Cores principais
+-  static const Color laranja = brand;
+-  static const Color laranjaClaro = brandLight;
+-  static const Color laranjaEscuro = brandDark;
+-  static const Color laranjaTransparente = brandOrangeTransparent;
+-  
+-  static const Color azul = brandBlue;
+-  static const Color azulClaro = brandBlueLight;
+-  static const Color azulEscuro = brandBlueDark;
+-  
+-  static const Color branco = white;
+-  static const Color preto = black;
+-  static const Color cinza = grayAlt;
+-  static const Color cinzaClaro = grayLight;
+-  static const Color creme = backgroundCream;
+-  static const Color pretoTransparente = grayTransparent;
++  static const Color laranja = Color(0xFFFF6B35);
++  static const Color laranjaClaro = Color(0xFFFF8A65);
++  static const Color laranjaEscuro = Color(0xFFE64A19);
++  static const Color laranjaTransparente = Color(0x80FF6B35);
++  
++  static const Color azul = Color(0xFF1976D2);
++  static const Color azulClaro = Color(0xFF42A5F5);
++  static const Color azulEscuro = Color(0xFF0D47A1);
++  
++  static const Color branco = Color(0xFFFFFFFF);
++  static const Color preto = Color(0xFF000000);
++  static const Color cinza = Color(0xFF9E9E9E);
++  static const Color cinzaClaro = Color(0xFFF5F5F5);
++  static const Color cinza700 = Color(0xFF616161);
++  static const Color cinza600 = Color(0xFF757575);
++  static const Color creme = Color(0xFFFFFBF0);
++  static const Color pretoTransparente = Color(0x80000000);
+   
+   // Cores semânticas
+-  static const Color sucesso = successGreen;
+-  static const Color erro = errorRed;
+-  static const Color aviso = warningYellow;
+-  static const Color info = infoCyan;
+-  static const Color emergencia = errorEmergency;
+-  static const Color emergenciaClaro = emergencyLight;
++  static const Color sucesso = Color(0xFF28A745);
++  static const Color erro = Color(0xFFDC3545);
++  static const Color aviso = Color(0xFFFFC107);
++  static const Color emergencia = Color(0xFFD32F2F);
++  static const Color emergenciaClaro = Color(0xFFFFDAD4);
+ 
+   // ========== ELEVATION SHADOWS ==========
+   // Sombras padronizadas Material 3
+   static List<BoxShadow> get elevationLow => [
+     BoxShadow(
+-      color: VelloTokens.black.withOpacity(0.08),
++      color: black.withOpacity(0.08),
+       blurRadius: 4,
+       offset: const Offset(0, 2),
+     ),
+@@ -209,12 +214,12 @@
+ 
+   static List<BoxShadow> get elevationMedium => [
+     BoxShadow(
+-      color: VelloTokens.black.withOpacity(0.12),
++      color: black.withOpacity(0.12),
+       blurRadius: 8,
+       offset: const Offset(0, 4),
+     ),
+     BoxShadow(
+-      color: VelloTokens.black.withOpacity(0.04),
++      color: black.withOpacity(0.04),
+       blurRadius: 4,
+       offset: const Offset(0, 2),
+     ),
+@@ -222,12 +227,12 @@
+ 
+   static List<BoxShadow> get elevationHigh => [
+     BoxShadow(
+-      color: VelloTokens.black.withOpacity(0.16),
++      color: black.withOpacity(0.16),
+       blurRadius: 16,
+       offset: const Offset(0, 8),
+     ),
+     BoxShadow(
+-      color: VelloTokens.black.withOpacity(0.08),
++      color: black.withOpacity(0.08),
+       blurRadius: 8,
+       offset: const Offset(0, 4),
+     ),
+@@ -235,17 +240,21 @@
+   
+   // Sombras legadas
+   static BoxShadow get shadowDefault => BoxShadow(
+-    color: VelloTokens.black.withOpacity(0.1),
++    color: black.withOpacity(0.1),
+     blurRadius: 10,
+     offset: const Offset(0, 2),
+   );
+   
+   static BoxShadow get shadowElevated => BoxShadow(
+-    color: VelloTokens.black.withOpacity(0.15),
++    color: black.withOpacity(0.15),
+     blurRadius: 20,
+     offset: const Offset(0, 4),
+   );
+ 
++  // CORREÇÃO: Adicionar aliases faltantes para compatibilidade
++  static BoxShadow get sombraPadrao => shadowDefault;
++  static LinearGradient get gradientePrimario => gradientPrimary;
++
+   // ========== BORDER RADIUS ==========
+   static const BorderRadius radiusXS = BorderRadius.all(Radius.circular(4));
+   static const BorderRadius radiusSmall = BorderRadius.all(Radius.circular(8));

@@ -5,7 +5,7 @@ class LoggerService {
   /// Configurações do logger
   static bool _isInitialized = false;
   static LogLevel _currentLevel = kDebugMode ? LogLevel.debug : LogLevel.info;
-  
+
   /// Inicializa o serviço de logging
   static void initialize({LogLevel? level}) {
     _currentLevel = level ?? (kDebugMode ? LogLevel.debug : LogLevel.info);
@@ -15,55 +15,59 @@ class LoggerService {
 
   /// Log de informação
   static void info(String message, {String? context, dynamic data}) {
-    _log(LogLevel.info, message, context: context, data: data);
+    final tag = context ?? 'UNKNOWN';
+    _log(LogLevel.info, message, context: tag, data: data);
   }
 
   /// Log de sucesso
   static void success(String message, {String? context, dynamic data}) {
-    _log(LogLevel.success, message, context: context, data: data);
+    final tag = context ?? 'UNKNOWN';
+    _log(LogLevel.success, message, context: tag, data: data);
   }
 
   /// Log de aviso
   static void warning(String message, {String? context, dynamic data}) {
-    _log(LogLevel.warning, message, context: context, data: data);
+    final tag = context ?? 'UNKNOWN';
+    _log(LogLevel.warning, message, context: tag, data: data);
   }
 
   /// Log de erro
   static void error(String message, {String? context, dynamic error, dynamic data}) {
-    _log(LogLevel.error, message, context: context, error: error, data: data);
+    final tag = context ?? 'UNKNOWN';
+    _log(LogLevel.error, message, context: tag, error: error, data: data);
   }
 
   /// Log de debug (apenas em modo debug)
   static void debug(String message, {String? context, dynamic data}) {
-    _log(LogLevel.debug, message, context: context, data: data);
+    final tag = context ?? 'UNKNOWN';
+    _log(LogLevel.debug, message, context: tag, data: data);
   }
 
   /// Método principal de logging
   static void _log(
-    LogLevel level, 
+    LogLevel level,
     String message, {
     String? context,
     dynamic error,
     dynamic data,
   }) {
-    // Não faz log se o nível for menor que o configurado
-    if (level.index < _currentLevel.index) return;
+    // CORREÇÃO: Usar 'code' ao invés de 'index' para evitar conflito com Enum.index
+    if (level.code < _currentLevel.code) return;
 
     if (!_isInitialized) {
       initialize();
     }
 
     final timestamp = DateTime.now().toIso8601String();
-    final contextStr = context != null ? '[$context]' : '';
-    final prefix = '${level.emoji} ${level.name.toUpperCase()}';
-    
-    String logMessage = '$prefix $contextStr $message';
-    
+    final levelStr = level.toString().split('.').last.toUpperCase();
+
+    String logMessage = '[$timestamp] [$levelStr] [$context] $message';
+
     // Adiciona dados extras se fornecidos
     if (data != null) {
       logMessage += ' | Data: $data';
     }
-    
+
     if (error != null) {
       logMessage += ' | Error: $error';
     }
@@ -120,24 +124,30 @@ class LoggerService {
       return result;
     } catch (e) {
       stopwatch.stop();
-      error('$operationName falhou após ${stopwatch.elapsedMilliseconds}ms', 
+      error('$operationName falhou após ${stopwatch.elapsedMilliseconds}ms',
             error: e, context: context);
       rethrow;
     }
+  }
+
+  // Helper para verificar se o log deve ser executado
+  static bool _shouldLog(LogLevel level) {
+    return level.code >= _currentLevel.code;
   }
 }
 
 /// Níveis de log disponíveis
 enum LogLevel {
+  // CORREÇÃO: Renomear 'index' para 'code' para evitar conflito com Enum.index
   debug(0, '🔍', 'DEBUG'),
   info(1, 'ℹ️', 'INFO'),
   success(2, '✅', 'SUCCESS'),
   warning(3, '⚠️', 'WARNING'),
   error(4, '❌', 'ERROR');
 
-  const LogLevel(this.index, this.emoji, this.name);
-  
-  final int index;
+  const LogLevel(this.code, this.emoji, this.name);
+
+  final int code;
   final String emoji;
   final String name;
 }

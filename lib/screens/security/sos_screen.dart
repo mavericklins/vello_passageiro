@@ -3,9 +3,9 @@ import 'package:geolocator/geolocator.dart';
 import '../../services/emergency_service.dart';
 import '../../services/advanced_security_service.dart';
 import '../../theme/vello_tokens.dart';
-import '../../theme/vello_tokens.dart';
 import '../../core/logger_service.dart';
 import '../../core/error_handler.dart';
+import 'package:share_plus/share_plus.dart';
 
 class SOSScreen extends StatefulWidget {
   @override
@@ -16,6 +16,7 @@ class _SOSScreenState extends State<SOSScreen> {
   bool _emergenciaAtiva = false;
   bool _isLoading = false;
   Position? _currentPosition;
+  List<EmergencyContact> _emergencyContacts = [];
 
   // Cores da identidade visual Vello
   static const Color velloBlue = VelloTokens.brandBlue;
@@ -26,6 +27,7 @@ class _SOSScreenState extends State<SOSScreen> {
   void initState() {
     super.initState();
     _getCurrentLocation();
+    _loadEmergencyContacts();
   }
 
   Future<void> _getCurrentLocation() async {
@@ -34,14 +36,29 @@ class _SOSScreenState extends State<SOSScreen> {
       if (permission == LocationPermission.denied) {
         await Geolocator.requestPermission();
       }
-      
+
       _currentPosition = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
       setState(() {});
     } catch (e) {
-      LoggerService.info('Erro ao obter localização: $e', context: context ?? 'UNKNOWN');
+      LoggerService.error('Erro ao obter localização: $e', context: 'SosScreen');
     }
+  }
+
+  void _loadEmergencyContacts() {
+    EmergencyService.getEmergencyContacts().listen(
+      (contacts) {
+        if (mounted) {
+          setState(() {
+            _emergencyContacts = contacts;
+          });
+        }
+      },
+      onError: (error) {
+        LoggerService.error('Erro ao carregar contatos de emergência: $error', context: 'SosScreen');
+      },
+    );
   }
 
   @override
@@ -394,13 +411,40 @@ class _SOSScreenState extends State<SOSScreen> {
               ],
             ),
             SizedBox(height: 16),
-            Text(
-              'Configure seus contatos de emergência para que sejam notificados automaticamente quando o SOS for acionado.',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[600],
+            if (_emergencyContacts.isEmpty) ...[
+              Text(
+                'Nenhum contato cadastrado ainda.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
               ),
-            ),
+              SizedBox(height: 8),
+              Text(
+                'Configure seus contatos de emergência para que sejam notificados automaticamente quando o SOS for acionado.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ] else ...[
+              Text(
+                '${_emergencyContacts.length} contato${_emergencyContacts.length > 1 ? 's' : ''} cadastrado${_emergencyContacts.length > 1 ? 's' : ''}.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: velloBlue,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'Seus contatos serão notificados automaticamente quando o SOS for acionado.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -423,7 +467,7 @@ class _SOSScreenState extends State<SOSScreen> {
       if (alertId != null) {
         // Ativar recursos avançados de segurança
         await AdvancedSecurityService().activateEmergency();
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('SOS acionado! Seus contatos foram notificados.'),
@@ -494,7 +538,7 @@ class _SOSScreenState extends State<SOSScreen> {
 
   void _cancelarEmergencia() async {
     await AdvancedSecurityService().cancelEmergency();
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Emergência cancelada.'),
@@ -508,12 +552,90 @@ class _SOSScreenState extends State<SOSScreen> {
   }
 
   void _shareLocation() async {
-    if (_currentPosition != null) {
-      await AdvancedSecurityService().shareLocation();
+    if (_currentPosition == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Localização não disponível. Tente novamente.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    if (_emergencyContacts.isEmpty) {
+      // Mostrar diálogo orientando a cadastrar contatos
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.warning, color: Colors.orange),
+              SizedBox(width: 8),
+              Text('Nenhum Contato Cadastrado'),
+            ],
+          ),
+          content: Text(
+            'Você precisa cadastrar contatos de emergência para compartilhar sua localização.\n\nDeseja cadastrar agora?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, '/emergency-contacts');
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: velloOrange),
+              child: Text('Cadastrar Contatos', style: TextStyle(color: VelloTokens.white)),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    // Compartilhar localização com todos os contatos cadastrados
+    final lat = _currentPosition!.latitude;
+    final lng = _currentPosition!.longitude;
+    final mapsLink = 'https://maps.google.com/?q=$lat,$lng';
+    
+    final message = '''
+[SOS] Preciso de ajuda urgente!
+
+📍 Minha localização atual:
+$mapsLink
+
+🕐 ${DateTime.now().toString().substring(0, 19)}
+
+Coordenadas: $lat, $lng
+
+📱 Enviado pelo aplicativo Vello
+    ''';
+
+    // Usar Share.share para abrir opções de compartilhamento
+    try {
+      await Share.share(message);
       
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Localização compartilhada!'),
+          backgroundColor: velloOrange,
+        ),
+      );
+    } catch (e) {
+      LoggerService.error('Erro ao compartilhar localização: $e', context: 'SosScreen');
+      
+      // Fallback: tentar compartilhar via WhatsApp para cada contato
+      for (final contact in _emergencyContacts) {
+        final phoneNumber = contact.phone.replaceAll(RegExp(r'[^\d]'), '');
+        await EmergencyService.shareLocationWhatsApp(phoneNumber, lat, lng);
+      }
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Localização enviada via WhatsApp para seus contatos!'),
           backgroundColor: velloOrange,
         ),
       );

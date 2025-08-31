@@ -18,11 +18,11 @@ class GeoapifyService {
         final data = jsonDecode(response.body);
         return data;
       } else {
-        LoggerService.error('Erro na API Geoapify Routing: ${response.statusCode} - ${response.body}', context: 'GEOAPIFY');
+        LoggerService.error('Erro na API Geoapify Routing: ${response.statusCode} - ${response.body}', context: 'geoapify_service');
         return null;
       }
     } catch (e) {
-      LoggerService.info('Erro ao obter detalhes da rota: $e', context: context ?? 'UNKNOWN');
+      LoggerService.info('Erro ao obter detalhes da rota: $e', context: 'geoapify_service');
       return null;
     }
   }
@@ -41,13 +41,11 @@ class GeoapifyService {
           return {'lon': coords[0], 'lat': coords[1]};
         }
       } else {
-        LoggerService.error('Erro na API Geoapify Geocoding: ${response.statusCode} - ${response.body}', context: 'GEOAPIFY');
+        LoggerService.error('Erro na API Geoapify Geocoding: ${response.statusCode} - ${response.body}', context: 'geoapify_service');
       }
     } catch (e) {
-      LoggerService.info('Erro ao obter coordenadas: $e', context: context ?? 'UNKNOWN');
+      LoggerService.info('Erro ao obter coordenadas: $e', context: 'geoapify_service');
     }
     return null;
   }
 }
-
-

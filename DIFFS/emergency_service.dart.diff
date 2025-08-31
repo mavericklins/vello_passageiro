@@ -1,0 +1,188 @@
+--- /app/lib/services/emergency_service.dart	2025-08-30 20:58:54.366548874 +0000
++++ lib/services/emergency_service.dart	2025-08-30 21:03:19.753521519 +0000
+@@ -149,6 +149,7 @@
+   
+   static String? get _userId => _auth.currentUser?.uid;
+   
++  // CORREÇÃO: Tratar null-safety adequadamente
+   static CollectionReference? get _contactsCollection {
+     final uid = _userId;
+     if (uid == null) return null;
+@@ -176,7 +177,8 @@
+     try {
+       final collection = _contactsCollection;
+       if (collection == null) {
+-        LoggerService.warning(' Usuário não autenticado para adicionar contato', context: context ?? 'UNKNOWN');
++        // CORREÇÃO: Usar string fixa ao invés de context inexistente
++        LoggerService.warning('Usuário não autenticado para adicionar contato', context: 'EMERGENCY_SERVICE');
+         return false;
+       }
+ 
+@@ -203,14 +205,19 @@
+       await collection.add(contact.toFirestore());
+       return true;
+     } catch (e) {
+-      LoggerService.info('Erro ao adicionar contato: $e', context: context ?? 'UNKNOWN');
++      LoggerService.error('Erro ao adicionar contato: $e', context: 'EMERGENCY_SERVICE');
+       return false;
+     }
+   }
+   
+   // Listar contatos de emergência
+   static Stream<List<EmergencyContact>> getEmergencyContacts() {
+-    return _contactsCollection
++    final collection = _contactsCollection;
++    if (collection == null) {
++      return Stream.value([]); // Retorna stream vazio se não autenticado
++    }
++    
++    return collection
+         .orderBy('isPrimary', descending: true)
+         .orderBy('createdAt')
+         .snapshots()
+@@ -222,10 +229,13 @@
+   // Remover contato de emergência
+   static Future<bool> removeEmergencyContact(String contactId) async {
+     try {
+-      await _contactsCollection.doc(contactId).delete();
++      final collection = _contactsCollection;
++      if (collection == null) return false;
++      
++      await collection.doc(contactId).delete();
+       return true;
+     } catch (e) {
+-      LoggerService.info('Erro ao remover contato: $e', context: context ?? 'UNKNOWN');
++      LoggerService.error('Erro ao remover contato: $e', context: 'EMERGENCY_SERVICE');
+       return false;
+     }
+   }
+@@ -239,9 +249,12 @@
+     bool isPrimary = false,
+   }) async {
+     try {
++      final collection = _contactsCollection;
++      if (collection == null) return false;
++      
+       // Se for contato primário, desmarcar outros
+       if (isPrimary) {
+-        final existingPrimary = await _contactsCollection
++        final existingPrimary = await collection
+             .where('isPrimary', isEqualTo: true)
+             .get();
+             
+@@ -252,7 +265,7 @@
+         }
+       }
+       
+-      await _contactsCollection.doc(contactId).update({
++      await collection.doc(contactId).update({
+         'name': name,
+         'phone': phone,
+         'relationship': relationship,
+@@ -261,7 +274,7 @@
+       
+       return true;
+     } catch (e) {
+-      LoggerService.info('Erro ao atualizar contato: $e', context: context ?? 'UNKNOWN');
++      LoggerService.error('Erro ao atualizar contato: $e', context: 'EMERGENCY_SERVICE');
+       return false;
+     }
+   }
+@@ -276,7 +289,7 @@
+     try {
+       final uid = _userId;
+       if (uid == null) {
+-        LoggerService.warning(' Usuário não autenticado para disparar alerta', context: context ?? 'UNKNOWN');
++        LoggerService.warning('Usuário não autenticado para disparar alerta', context: 'EMERGENCY_SERVICE');
+         return null;
+       }
+ 
+@@ -287,14 +300,14 @@
+       try {
+         position = await Geolocator.getCurrentPosition(
+           desiredAccuracy: LocationAccuracy.high,
+-          timeLimit: Duration(seconds: 10),
++          timeLimit: const Duration(seconds: 10),
+         );
+         
+         // Aqui poderia fazer reverse geocoding para obter endereço
+         // Por simplicidade, vamos usar coordenadas
+         currentAddress = '${position.latitude.toStringAsFixed(6)}, ${position.longitude.toStringAsFixed(6)}';
+       } catch (e) {
+-        LoggerService.info('Erro ao obter localização: $e', context: context ?? 'UNKNOWN');
++        LoggerService.error('Erro ao obter localização: $e', context: 'EMERGENCY_SERVICE');
+       }
+       
+       final alert = EmergencyAlert(
+@@ -318,7 +331,7 @@
+       
+       return docRef.id;
+     } catch (e) {
+-      LoggerService.info('Erro ao disparar alerta: $e', context: context ?? 'UNKNOWN');
++      LoggerService.error('Erro ao disparar alerta: $e', context: 'EMERGENCY_SERVICE');
+       return null;
+     }
+   }
+@@ -326,20 +339,23 @@
+   // Notificar contatos de emergência
+   static Future<void> _notifyEmergencyContacts(String alertId, EmergencyAlert alert) async {
+     try {
+-      final contacts = await _contactsCollection.get();
++      final collection = _contactsCollection;
++      if (collection == null) return;
++      
++      final contacts = await collection.get();
+       
+       for (final contactDoc in contacts.docs) {
+         final contact = EmergencyContact.fromFirestore(contactDoc);
+         
+         // Aqui poderia integrar com serviço de SMS/WhatsApp
+         // Por enquanto, apenas log
+-        LoggerService.info('Notificando ${contact.name} (${contact.phone}) sobre emergência', context: context ?? 'UNKNOWN');
++        LoggerService.info('Notificando ${contact.name} (${contact.phone}) sobre emergência', context: 'EMERGENCY_SERVICE');
+         
+         // Se tiver integração com SMS, seria algo como:
+         // await SmsService.sendEmergencyAlert(contact.phone, alert);
+       }
+     } catch (e) {
+-      LoggerService.info('Erro ao notificar contatos: $e', context: context ?? 'UNKNOWN');
++      LoggerService.error('Erro ao notificar contatos: $e', context: 'EMERGENCY_SERVICE');
+     }
+   }
+   
+@@ -352,7 +368,7 @@
+       });
+       return true;
+     } catch (e) {
+-      LoggerService.info('Erro ao resolver alerta: $e', context: context ?? 'UNKNOWN');
++      LoggerService.error('Erro ao resolver alerta: $e', context: 'EMERGENCY_SERVICE');
+       return false;
+     }
+   }
+@@ -366,7 +382,7 @@
+       });
+       return true;
+     } catch (e) {
+-      LoggerService.info('Erro ao cancelar alerta: $e', context: context ?? 'UNKNOWN');
++      LoggerService.error('Erro ao cancelar alerta: $e', context: 'EMERGENCY_SERVICE');
+       return false;
+     }
+   }
+@@ -396,7 +412,7 @@
+       }
+       return false;
+     } catch (e) {
+-      LoggerService.info('Erro ao fazer ligação: $e', context: context ?? 'UNKNOWN');
++      LoggerService.error('Erro ao fazer ligação: $e', context: 'EMERGENCY_SERVICE');
+       return false;
+     }
+   }
+@@ -417,7 +433,7 @@
+       }
+       return false;
+     } catch (e) {
+-      LoggerService.info('Erro ao compartilhar no WhatsApp: $e', context: context ?? 'UNKNOWN');
++      LoggerService.error('Erro ao compartilhar no WhatsApp: $e', context: 'EMERGENCY_SERVICE');
+       return false;
+     }
+   }

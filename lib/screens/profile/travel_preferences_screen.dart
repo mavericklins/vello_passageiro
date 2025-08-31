@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:vello/services/firebase_service.dart';
+import '../../services/firebase_service.dart';
 import '../../theme/vello_tokens.dart';
 import '../../core/logger_service.dart';
 import '../../core/error_handler.dart';
@@ -12,8 +12,8 @@ class TravelPreferencesScreen extends StatefulWidget {
 }
 
 class _TravelPreferencesScreenState extends State<TravelPreferencesScreen> {
-  final FirebaseService _firebaseService = FirebaseService();
-  Map<String, bool> _preferences = {
+  final FirebaseService _firebaseService = FirebaseService.instance;
+  Map<String, dynamic> _preferences = {
     'silence': false,
     'music': false,
     'air_conditioning': false,
@@ -47,7 +47,7 @@ class _TravelPreferencesScreenState extends State<TravelPreferencesScreen> {
       await _firebaseService.saveTravelPreferences(_preferences);
       _showSnackBar("Preferências salvas com sucesso!", Colors.green);
     } catch (e) {
-      LoggerService.info("Erro ao salvar preferências: $e", context: context ?? "UNKNOWN");
+      LoggerService.info("Erro ao salvar preferências: $e", context: 'travel_preferences_screen');
       _showSnackBar("Erro ao salvar preferências. Tente novamente.", Colors.red);
     }
   }
@@ -83,7 +83,7 @@ class _TravelPreferencesScreenState extends State<TravelPreferencesScreen> {
           icon: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const VelloTokens.gray200,
+              color: VelloTokens.gray200,
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Icon(
@@ -130,7 +130,7 @@ class _TravelPreferencesScreenState extends State<TravelPreferencesScreen> {
                       "Viagem em Silêncio",
                       style: TextStyle(color: velloBlue),
                     ),
-                    value: _preferences['silence']!,
+                    value: _preferences['silence'] ?? false,
                     onChanged: (bool value) {
                       setState(() {
                         _preferences['silence'] = value;
@@ -143,7 +143,7 @@ class _TravelPreferencesScreenState extends State<TravelPreferencesScreen> {
                       "Música Ambiente",
                       style: TextStyle(color: velloBlue),
                     ),
-                    value: _preferences['music']!,
+                    value: _preferences['music'] ?? false,
                     onChanged: (bool value) {
                       setState(() {
                         _preferences['music'] = value;
@@ -156,7 +156,7 @@ class _TravelPreferencesScreenState extends State<TravelPreferencesScreen> {
                       "Ar Condicionado",
                       style: TextStyle(color: velloBlue),
                     ),
-                    value: _preferences['air_conditioning']!,
+                    value: _preferences['air_conditioning'] ?? false,
                     onChanged: (bool value) {
                       setState(() {
                         _preferences['air_conditioning'] = value;
@@ -191,5 +191,3 @@ class _TravelPreferencesScreenState extends State<TravelPreferencesScreen> {
     );
   }
 }
-
-

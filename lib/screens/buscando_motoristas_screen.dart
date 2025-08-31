@@ -6,8 +6,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geolocator/geolocator.dart';
 import 'dart:async';
 import '../theme/vello_tokens.dart';
-import '../../core/logger_service.dart';
-import '../../core/error_handler.dart';
+import '../core/logger_service.dart';
+import '../core/error_handler.dart';
 
 class BuscandoMotoristasScreen extends StatefulWidget {
   final String corridaId;
@@ -84,7 +84,7 @@ class _BuscandoMotoristasScreenState extends State<BuscandoMotoristasScreen>
         _mapController.move(_currentLocation!, 15);
       }
     } catch (e) {
-      LoggerService.info('Erro ao obter localização: $e', context: context ?? 'UNKNOWN');
+      LoggerService.info('Erro ao obter localização: $e', context: 'BuscandoMotoristasScreen');
     }
   }
 
@@ -137,7 +137,7 @@ class _BuscandoMotoristasScreenState extends State<BuscandoMotoristasScreen>
       });
 
     } catch (e) {
-      LoggerService.info('Erro ao buscar motoristas: $e', context: context ?? 'UNKNOWN');
+      LoggerService.info('Erro ao buscar motoristas: $e', context: 'BuscandoMotoristasScreen');
     }
   }
 
@@ -217,8 +217,8 @@ class _BuscandoMotoristasScreenState extends State<BuscandoMotoristasScreen>
             FlutterMap(
               mapController: _mapController,
               options: MapOptions(
-                center: _currentLocation,
-                zoom: 15,
+                initialCenter: _currentLocation ?? const LatLng(-23.5505, -46.6333),
+                initialZoom: 15,
                 minZoom: 12.0,
               ),
               children: [

@@ -4,7 +4,7 @@ import 'pricing_service.dart';
 import '../core/logger_service.dart';
 import '../core/error_handler.dart';
 
-enum PromotionType { 
+enum PromotionType {
   firstRide, // Primeira viagem
   referral,  // Indicação
   seasonal,  // Sazonal
@@ -30,7 +30,7 @@ class Promotion {
   final bool isActive;
   final String? imageUrl;
   final List<String> targetUserIds; // Vazio = para todos
-  
+
   Promotion({
     required this.id,
     required this.title,
@@ -49,7 +49,7 @@ class Promotion {
     this.imageUrl,
     required this.targetUserIds,
   });
-  
+
   factory Promotion.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     return Promotion(
@@ -77,7 +77,7 @@ class Promotion {
       targetUserIds: List<String>.from(data['targetUserIds'] ?? []),
     );
   }
-  
+
   Map<String, dynamic> toFirestore() {
     return {
       'title': title,
@@ -97,7 +97,7 @@ class Promotion {
       'targetUserIds': targetUserIds,
     };
   }
-  
+
   bool get isValid {
     final now = DateTime.now();
     return isActive &&
@@ -105,11 +105,11 @@ class Promotion {
            now.isBefore(endDate) &&
            (usageLimit == null || usageCount < usageLimit!);
   }
-  
+
   bool isValidForUser(String userId) {
     return isValid && (targetUserIds.isEmpty || targetUserIds.contains(userId));
   }
-  
+
   String get formattedDiscount {
     if (discountType == DiscountType.percentage) {
       return '${discountValue.toInt()}% OFF';
@@ -117,7 +117,7 @@ class Promotion {
       return 'R\$ ${discountValue.toStringAsFixed(2).replaceAll('.', ',')} OFF';
     }
   }
-  
+
   String get typeDisplay {
     switch (type) {
       case PromotionType.firstRide:
@@ -144,7 +144,7 @@ class UserPromotion {
   final DateTime usedAt;
   final String rideId;
   final double discountApplied;
-  
+
   UserPromotion({
     required this.id,
     required this.userId,
@@ -154,7 +154,7 @@ class UserPromotion {
     required this.rideId,
     required this.discountApplied,
   });
-  
+
   factory UserPromotion.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     return UserPromotion(
@@ -167,7 +167,7 @@ class UserPromotion {
       discountApplied: (data['discountApplied'] as num).toDouble(),
     );
   }
-  
+
   Map<String, dynamic> toFirestore() {
     return {
       'userId': userId,
@@ -183,15 +183,15 @@ class UserPromotion {
 class PromotionsService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   static final FirebaseAuth _auth = FirebaseAuth.instance;
-  
+
   static String get _userId => _auth.currentUser!.uid;
-  
+
   static CollectionReference get _promotionsCollection =>
       _firestore.collection('promocoes');
-      
+
   static CollectionReference get _userPromotionsCollection =>
       _firestore.collection('promocoes_usuarios');
-  
+
   // Listar promoções disponíveis para o usuário
   static Future<List<Promotion>> getAvailablePromotions() async {
     try {
@@ -201,14 +201,14 @@ class PromotionsService {
           .where('startDate', isLessThanOrEqualTo: Timestamp.fromDate(now))
           .where('endDate', isGreaterThan: Timestamp.fromDate(now))
           .get();
-      
+
       final allPromotions = query.docs
           .map((doc) => Promotion.fromFirestore(doc))
           .toList();
-      
+
       // Filtrar promoções válidas para o usuário
       final availablePromotions = <Promotion>[];
-      
+
       for (final promotion in allPromotions) {
         if (promotion.isValidForUser(_userId)) {
           // Verificar se o usuário já usou esta promoção
@@ -218,14 +218,14 @@ class PromotionsService {
           }
         }
       }
-      
+
       return availablePromotions;
     } catch (e) {
-      LoggerService.info('Erro ao buscar promoções: $e', context: context ?? 'UNKNOWN');
+      LoggerService.info('Erro ao buscar promoções: $e', context: 'PromotionsService');
       return [];
     }
   }
-  
+
   // Verificar se usuário já usou uma promoção
   static Future<bool> _hasUserUsedPromotion(String promotionId) async {
     try {
@@ -233,13 +233,13 @@ class PromotionsService {
           .where('userId', isEqualTo: _userId)
           .where('promotionId', isEqualTo: promotionId)
           .get();
-          
+
       return query.docs.isNotEmpty;
     } catch (e) {
       return false;
     }
   }
-  
+
   // Validar código de cupom
   static Future<Promotion?> validateCouponCode(String code) async {
     try {
@@ -247,24 +247,24 @@ class PromotionsService {
           .where('code', isEqualTo: code.toUpperCase())
           .limit(1)
           .get();
-          
+
       if (query.docs.isEmpty) return null;
-      
+
       final promotion = Promotion.fromFirestore(query.docs.first);
-      
+
       if (!promotion.isValidForUser(_userId)) return null;
-      
+
       // Verificar se já foi usado
       final hasUsed = await _hasUserUsedPromotion(promotion.id);
       if (hasUsed && promotion.usageLimit != null) return null;
-      
+
       return promotion;
     } catch (e) {
-      LoggerService.info('Erro ao validar cupom: $e', context: context ?? 'UNKNOWN');
+      LoggerService.info('Erro ao validar cupom: $e', context: 'PromotionsService');
       return null;
     }
   }
-  
+
   // Aplicar promoção
   static Future<bool> applyPromotion({
     required String promotionId,
@@ -274,7 +274,7 @@ class PromotionsService {
     try {
       final promotion = await _getPromotion(promotionId);
       if (promotion == null) return false;
-      
+
       final userPromotion = UserPromotion(
         id: '',
         userId: _userId,
@@ -284,21 +284,21 @@ class PromotionsService {
         rideId: rideId,
         discountApplied: discountApplied,
       );
-      
+
       await _userPromotionsCollection.add(userPromotion.toFirestore());
-      
+
       // Incrementar contador de uso da promoção
       await _promotionsCollection.doc(promotionId).update({
         'usageCount': FieldValue.increment(1),
       });
-      
+
       return true;
     } catch (e) {
-      LoggerService.info('Erro ao aplicar promoção: $e', context: context ?? 'UNKNOWN');
+      LoggerService.info('Erro ao aplicar promoção: $e', context: 'PromotionsService');
       return false;
     }
   }
-  
+
   // Obter promoção específica
   static Future<Promotion?> _getPromotion(String promotionId) async {
     try {
@@ -311,7 +311,7 @@ class PromotionsService {
       return null;
     }
   }
-  
+
   // Listar promoções usadas pelo usuário
   static Stream<List<UserPromotion>> getUserPromotions() {
     return _userPromotionsCollection
@@ -322,7 +322,7 @@ class PromotionsService {
             .map((doc) => UserPromotion.fromFirestore(doc))
             .toList());
   }
-  
+
   // Criar promoção personalizada (para primeira viagem, aniversário, etc.)
   static Future<void> createPersonalizedPromotions(String userId) async {
     try {
@@ -332,7 +332,7 @@ class PromotionsService {
           .where('passageiroId', isEqualTo: userId)
           .limit(1)
           .get();
-          
+
       if (ridesQuery.docs.isEmpty) {
         // Criar promoção de primeira viagem
         final firstRidePromotion = Promotion(
@@ -351,21 +351,21 @@ class PromotionsService {
           isActive: true,
           targetUserIds: [userId],
         );
-        
+
         await _promotionsCollection.add(firstRidePromotion.toFirestore());
       }
     } catch (e) {
-      LoggerService.info('Erro ao criar promoções personalizadas: $e', context: context ?? 'UNKNOWN');
+      LoggerService.info('Erro ao criar promoções personalizadas: $e', context: 'PromotionsService');
     }
   }
-  
+
   // Obter estatísticas de promoções do usuário
   static Future<PromotionStats> getUserPromotionStats() async {
     try {
       final query = await _userPromotionsCollection
           .where('userId', isEqualTo: _userId)
           .get();
-          
+
       if (query.docs.isEmpty) {
         return PromotionStats(
           totalPromotionsUsed: 0,
@@ -373,38 +373,38 @@ class PromotionsService {
           favoritePromotionType: null,
         );
       }
-      
+
       final userPromotions = query.docs
           .map((doc) => UserPromotion.fromFirestore(doc))
           .toList();
-      
+
       double totalSavings = 0;
       Map<PromotionType, int> typeCount = {};
-      
+
       for (final userPromotion in userPromotions) {
         totalSavings += userPromotion.discountApplied;
-        
+
         // Buscar tipo da promoção (simplificado)
         final promotion = await _getPromotion(userPromotion.promotionId);
         if (promotion != null) {
           typeCount[promotion.type] = (typeCount[promotion.type] ?? 0) + 1;
         }
       }
-      
+
       PromotionType? favoriteType;
       if (typeCount.isNotEmpty) {
         favoriteType = typeCount.entries
             .reduce((a, b) => a.value > b.value ? a : b)
             .key;
       }
-      
+
       return PromotionStats(
         totalPromotionsUsed: userPromotions.length,
         totalSavings: totalSavings,
         favoritePromotionType: favoriteType,
       );
     } catch (e) {
-      LoggerService.info('Erro ao calcular estatísticas: $e', context: context ?? 'UNKNOWN');
+      LoggerService.info('Erro ao calcular estatísticas: $e', context: 'PromotionsService');
       return PromotionStats(
         totalPromotionsUsed: 0,
         totalSavings: 0,
@@ -418,13 +418,13 @@ class PromotionStats {
   final int totalPromotionsUsed;
   final double totalSavings;
   final PromotionType? favoritePromotionType;
-  
+
   PromotionStats({
     required this.totalPromotionsUsed,
     required this.totalSavings,
     this.favoritePromotionType,
   });
-  
-  String get formattedSavings => 
+
+  String get formattedSavings =>
       'R\$ ${totalSavings.toStringAsFixed(2).replaceAll('.', ',')}';
 }

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/emergency_service.dart';
 import '../../theme/vello_tokens.dart';
-import '../../utils/validators.dart';
-import '../../constants/strings.dart';
+import '../../core/logger_service.dart';
 
 class EmergencyContactsScreen extends StatefulWidget {
   @override
@@ -15,7 +14,8 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
   final TextEditingController _relationshipController = TextEditingController();
   
   List<EmergencyContact> _contacts = [];
-  bool _isLoading = false;
+  bool _isLoading = true;
+  String? _error;
 
   // Cores da identidade visual Vello
   static const Color velloBlue = VelloTokens.brandBlue;
@@ -36,15 +36,32 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
     super.dispose();
   }
 
-  Future<void> _loadContacts() async {
-    setState(() => _isLoading = true);
-    
-    EmergencyService.getEmergencyContacts().listen((contacts) {
-      setState(() {
-        _contacts = contacts;
-        _isLoading = false;
-      });
+  void _loadContacts() {
+    setState(() {
+      _isLoading = true;
+      _error = null;
     });
+
+    EmergencyService.getEmergencyContacts().listen(
+      (contacts) {
+        if (mounted) {
+          setState(() {
+            _contacts = contacts;
+            _isLoading = false;
+            _error = null;
+          });
+        }
+      },
+      onError: (error) {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+            _error = 'Erro ao carregar contatos: $error';
+          });
+        }
+        LoggerService.error('Erro ao carregar contatos de emergência: $error', context: 'EMERGENCY_CONTACTS');
+      },
+    );
   }
 
   @override
@@ -52,23 +69,24 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
     return Scaffold(
       backgroundColor: velloLightGray,
       appBar: AppBar(
-        title: Text(
-          AppStrings.tituloContatosEmergencia,
+        title: const Text(
+          'Contatos de Emergência',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: velloBlue,
           ),
         ),
         backgroundColor: VelloTokens.white,
+        foregroundColor: velloBlue,
         elevation: 2,
         leading: IconButton(
           icon: Container(
-            padding: EdgeInsets.all(8),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: velloOrange.withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(
+            child: const Icon(
               Icons.arrow_back,
               color: velloOrange,
               size: 20,
@@ -78,180 +96,144 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.add, color: velloBlue),
-            onPressed: _showAddContactDialog,
-          ),
-        ],
-      ),
-      body: _isLoading
-          ? Center(
-              child: CircularProgressIndicator(color: velloOrange),
-            )
-          : SingleChildScrollView(
-              padding: EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildInfoCard(),
-                  SizedBox(height: 24),
-                  _buildContactsList(),
-                  SizedBox(height: 24),
-                  _buildEmergencyNumbers(),
-                ],
-              ),
-            ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showAddContactDialog,
-        backgroundColor: velloOrange,
-        child: Icon(Icons.add, color: VelloTokens.white),
-      ),
-    );
-  }
-
-  Widget _buildInfoCard() {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: velloBlue.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: velloBlue.withOpacity(0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.info_outline, color: velloBlue, size: 24),
-              SizedBox(width: 12),
-              Text(
-                'Importante!',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: velloBlue,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12),
-          Text(
-            'Configure seus contatos de emergência para que sejam notificados automaticamente em caso de acionamento do SOS.',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[700],
-              height: 1.5,
-            ),
-          ),
-          SizedBox(height: 8),
-          Text(
-            '• Máximo 5 contatos\n'
-            '• 1 contato principal\n'
-            '• Notificação via WhatsApp\n'
-            '• Localização em tempo real',
-            style: TextStyle(
-              fontSize: 13,
-              color: Colors.grey[600],
-              height: 1.4,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildContactsList() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Seus Contatos (${_contacts.length}/5)',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: velloBlue,
-          ),
-        ),
-        SizedBox(height: 16),
-        
-        if (_contacts.isEmpty)
-          _buildEmptyState()
-        else
-          ListView.builder(
-            shrinkWrap: true,
-            physics: NeverScrollableScrollPhysics(),
-            itemCount: _contacts.length,
-            itemBuilder: (context, index) {
-              return _buildContactCard(_contacts[index]);
-            },
-          ),
-      ],
-    );
-  }
-
-  Widget _buildEmptyState() {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(40),
-      decoration: BoxDecoration(
-        color: VelloTokens.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: VelloTokens.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Icon(
-            Icons.contacts_outlined,
-            size: 64,
-            color: Colors.grey[400],
-          ),
-          SizedBox(height: 16),
-          Text(
-            'Nenhum contato cadastrado',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey[600],
-            ),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'Adicione contatos de confiança para emergências',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[500],
-            ),
-          ),
-          SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: _showAddContactDialog,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: velloOrange,
-              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: velloOrange.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
+              child: const Icon(
+                Icons.add,
+                color: velloOrange,
+                size: 20,
+              ),
             ),
-            child: Text(
-              'Adicionar Primeiro Contato',
-              style: TextStyle(color: VelloTokens.white),
-            ),
+            onPressed: () => _showAddContactDialog(),
           ),
         ],
       ),
+      body: _buildBody(),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showAddContactDialog(),
+        backgroundColor: velloOrange,
+        child: const Icon(
+          Icons.add,
+          color: VelloTokens.white,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBody() {
+    if (_isLoading) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(color: velloOrange),
+            SizedBox(height: 16),
+            Text(
+              'Carregando contatos...',
+              style: TextStyle(
+                fontSize: 16,
+                color: velloBlue,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_error != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 64,
+              color: Colors.red[400],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _error!,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.red[600],
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: _loadContacts,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: velloOrange,
+                foregroundColor: VelloTokens.white,
+              ),
+              child: const Text('Tentar Novamente'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_contacts.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.contacts,
+              size: 64,
+              color: Colors.grey[400],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Nenhum contato cadastrado',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: velloBlue,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Adicione contatos de emergência para\nmaior segurança nas suas viagens',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[600],
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () => _showAddContactDialog(),
+              icon: const Icon(Icons.add),
+              label: const Text('Adicionar Contato'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: velloOrange,
+                foregroundColor: VelloTokens.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: _contacts.length,
+      itemBuilder: (context, index) {
+        final contact = _contacts[index];
+        return _buildContactCard(contact);
+      },
     );
   }
 
   Widget _buildContactCard(EmergencyContact contact) {
     return Container(
-      margin: EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: VelloTokens.white,
         borderRadius: BorderRadius.circular(16),
@@ -259,247 +241,137 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
           BoxShadow(
             color: VelloTokens.black.withOpacity(0.1),
             blurRadius: 10,
-            offset: Offset(0, 2),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Padding(
-        padding: EdgeInsets.all(16),
-        child: Row(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: contact.isPrimary ? velloOrange : velloBlue,
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: Stack(
-                children: [
-                  Center(
-                    child: Text(
-                      contact.name.substring(0, 1).toUpperCase(),
-                      style: TextStyle(
-                        color: VelloTokens.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+            Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: contact.isPrimary ? velloOrange.withOpacity(0.1) : velloBlue.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(24),
                   ),
-                  if (contact.isPrimary)
-                    Positioned(
-                      top: 0,
-                      right: 0,
-                      child: Container(
-                        width: 16,
-                        height: 16,
-                        decoration: BoxDecoration(
-                          color: Colors.green,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: VelloTokens.white, width: 2),
-                        ),
-                        child: Icon(
-                          Icons.star,
-                          size: 8,
-                          color: VelloTokens.white,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+                  child: Icon(
+                    Icons.person,
+                    color: contact.isPrimary ? velloOrange : velloBlue,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        contact.name,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: velloBlue,
-                        ),
-                      ),
-                      if (contact.isPrimary) ...[
-                        SizedBox(width: 8),
-                        Container(
-                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Colors.green[50],
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            'PRINCIPAL',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.green[700],
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              contact.name,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: velloBlue,
+                              ),
                             ),
                           ),
+                          if (contact.isPrimary) ...[
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: velloOrange.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: velloOrange.withOpacity(0.3)),
+                              ),
+                              child: const Text(
+                                'Principal',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: velloOrange,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        contact.formattedPhone,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[600],
                         ),
-                      ],
-                    ],
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    contact.formattedPhone,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                  Text(
-                    contact.relationship,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[500],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            PopupMenuButton(
-              icon: Icon(Icons.more_vert, color: Colors.grey[600]),
-              itemBuilder: (context) => [
-                PopupMenuItem(
-                  value: 'edit',
-                  child: Row(
-                    children: [
-                      Icon(Icons.edit, color: velloBlue),
-                      SizedBox(width: 8),
-                      Text('Editar'),
+                      ),
+                      Text(
+                        contact.relationship,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[500],
+                        ),
+                      ),
                     ],
                   ),
                 ),
-                PopupMenuItem(
-                  value: 'call',
-                  child: Row(
-                    children: [
-                      Icon(Icons.call, color: Colors.green),
-                      SizedBox(width: 8),
-                      Text('Ligar'),
-                    ],
-                  ),
-                ),
-                if (!contact.isPrimary)
-                  PopupMenuItem(
-                    value: 'primary',
-                    child: Row(
-                      children: [
-                        Icon(Icons.star, color: velloOrange),
-                        SizedBox(width: 8),
-                        Text('Tornar Principal'),
-                      ],
+                PopupMenuButton<String>(
+                  onSelected: (action) => _handleContactAction(contact, action),
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: 'call',
+                      child: Row(
+                        children: [
+                          Icon(Icons.phone, size: 18),
+                          SizedBox(width: 8),
+                          Text('Ligar'),
+                        ],
+                      ),
                     ),
-                  ),
-                PopupMenuItem(
-                  value: 'delete',
-                  child: Row(
-                    children: [
-                      Icon(Icons.delete, color: Colors.red),
-                      SizedBox(width: 8),
-                      Text('Remover'),
+                    const PopupMenuItem(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit, size: 18),
+                          SizedBox(width: 8),
+                          Text('Editar'),
+                        ],
+                      ),
+                    ),
+                    if (!contact.isPrimary) ...[
+                      const PopupMenuItem(
+                        value: 'primary',
+                        child: Row(
+                          children: [
+                            Icon(Icons.star, size: 18),
+                            SizedBox(width: 8),
+                            Text('Tornar Principal'),
+                          ],
+                        ),
+                      ),
                     ],
-                  ),
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(Icons.delete, size: 18, color: Colors.red),
+                          SizedBox(width: 8),
+                          Text('Excluir', style: TextStyle(color: Colors.red)),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ],
-              onSelected: (value) => _handleContactAction(contact, value.toString()),
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildEmergencyNumbers() {
-    final emergencyNumbers = [
-      {'name': 'Polícia', 'number': '190', 'icon': Icons.local_police, 'color': Colors.blue},
-      {'name': 'SAMU', 'number': '192', 'icon': Icons.medical_services, 'color': Colors.red},
-      {'name': 'Bombeiros', 'number': '193', 'icon': Icons.fire_truck, 'color': Colors.orange},
-      {'name': 'PRF', 'number': '191', 'icon': Icons.security, 'color': Colors.green},
-    ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Números de Emergência',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: velloBlue,
-          ),
-        ),
-        SizedBox(height: 16),
-        Container(
-          decoration: BoxDecoration(
-            color: VelloTokens.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: VelloTokens.black.withOpacity(0.1),
-                blurRadius: 10,
-                offset: Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            children: emergencyNumbers.asMap().entries.map((entry) {
-              final index = entry.key;
-              final service = entry.value;
-              final isLast = index == emergencyNumbers.length - 1;
-              
-              return Column(
-                children: [
-                  ListTile(
-                    leading: Container(
-                      padding: EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: (service['color'] as Color).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        service['icon'] as IconData,
-                        color: service['color'] as Color,
-                      ),
-                    ),
-                    title: Text(
-                      service['name'] as String,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: velloBlue,
-                      ),
-                    ),
-                    subtitle: Text(
-                      'Toque para ligar',
-                      style: TextStyle(color: Colors.grey[600]),
-                    ),
-                    trailing: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: service['color'] as Color,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Text(
-                        service['number'] as String,
-                        style: TextStyle(
-                          color: VelloTokens.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    onTap: () => EmergencyService.makeEmergencyCall(service['number'] as String),
-                  ),
-                  if (!isLast) Divider(height: 1, indent: 16, endIndent: 16),
-                ],
-              );
-            }).toList(),
-          ),
-        ),
-      ],
     );
   }
 
@@ -516,115 +388,104 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
       _relationshipController.clear();
     }
 
-    showModalBottomSheet(
+    showDialog(
       context: context,
-      isScrollControlled: true,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(
+              isEditing ? Icons.edit : Icons.person_add,
+              color: velloOrange,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              isEditing ? 'Editar Contato' : 'Adicionar Contato',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: velloBlue,
+              ),
+            ),
+          ],
         ),
-        child: Container(
-          padding: EdgeInsets.all(20),
+        content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                isEditing ? 'Editar Contato' : 'Novo Contato de Emergência',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: velloBlue,
-                ),
-              ),
-              SizedBox(height: 20),
-              
               TextField(
                 controller: _nameController,
                 decoration: InputDecoration(
                   labelText: 'Nome completo',
-                  prefixIcon: Icon(Icons.person, color: velloBlue),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  hintText: 'Ex: João Silva',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: velloOrange),
+                    borderSide: const BorderSide(color: velloOrange, width: 2),
                   ),
+                  prefixIcon: const Icon(Icons.person, color: velloBlue),
                 ),
+                textCapitalization: TextCapitalization.words,
               ),
-              SizedBox(height: 16),
-              
+              const SizedBox(height: 16),
               TextField(
                 controller: _phoneController,
-                keyboardType: TextInputType.phone,
                 decoration: InputDecoration(
-                  labelText: 'Telefone (com DDD)',
-                  prefixIcon: Icon(Icons.phone, color: velloBlue),
-                  hintText: '11999999999',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  labelText: 'Telefone',
+                  hintText: 'Ex: (11) 99999-9999',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: velloOrange),
+                    borderSide: const BorderSide(color: velloOrange, width: 2),
                   ),
+                  prefixIcon: const Icon(Icons.phone, color: velloBlue),
                 ),
+                keyboardType: TextInputType.phone,
               ),
-              SizedBox(height: 16),
-              
+              const SizedBox(height: 16),
               TextField(
                 controller: _relationshipController,
                 decoration: InputDecoration(
                   labelText: 'Parentesco/Relação',
-                  prefixIcon: Icon(Icons.family_restroom, color: velloBlue),
-                  hintText: 'Ex: Mãe, Pai, Irmão, Amigo...',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  hintText: 'Ex: Mãe, Irmão, Amigo',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: velloOrange),
+                    borderSide: const BorderSide(color: velloOrange, width: 2),
                   ),
+                  prefixIcon: const Icon(Icons.family_restroom, color: velloBlue),
                 ),
-              ),
-              
-              SizedBox(height: 24),
-              
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: OutlinedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: Text('Cancelar'),
-                    ),
-                  ),
-                  SizedBox(width: 12),
-                  Expanded(
-                    flex: 2,
-                    child: ElevatedButton(
-                      onPressed: () => isEditing ? _editContact(contact) : _addContact(),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: velloOrange,
-                        padding: EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: Text(
-                        isEditing ? 'Salvar Alterações' : 'Adicionar Contato',
-                        style: TextStyle(color: VelloTokens.white),
-                      ),
-                    ),
-                  ),
-                ],
+                textCapitalization: TextCapitalization.words,
               ),
             ],
           ),
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Cancelar',
+              style: TextStyle(color: Colors.grey[600]),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => isEditing ? _editContact(contact) : _addContact(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: velloOrange,
+              foregroundColor: VelloTokens.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: Text(
+              isEditing ? 'Salvar Alterações' : 'Adicionar Contato',
+              style: TextStyle(color: VelloTokens.white),
+            ),
+          ),
+        ],
       ),
     );
   }

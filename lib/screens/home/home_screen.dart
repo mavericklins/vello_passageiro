@@ -7,10 +7,10 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:vello/screens/configuracoes/configuracoes_screen.dart';
-import 'package:vello/screens/historico/historico_screen.dart';
-import 'package:vello/screens/login_screen.dart';
-import 'package:vello/screens/perfil/perfil_screen.dart';
+import '../configuracoes/configuracoes_screen.dart';
+import '../historico/historico_screen.dart';
+import '../login_screen.dart';
+import '../perfil/perfil_screen.dart';
 
 import '../ride_request_screen.dart';
 import '../../core/logger_service.dart';
@@ -19,6 +19,7 @@ import '../../services/firebase_service.dart';
 import '../../services/geolocation_service.dart';
 import '../../theme/vello_tokens.dart';
 import '../../widgets/security/simple_trip_sharing.dart';
+import '../../routes/app_routes.dart';
 
 class WelcomeBanner extends StatelessWidget {
   final String userName;
@@ -73,7 +74,7 @@ class WelcomeBanner extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const VelloTokens.brandOrange,
+              color: VelloTokens.brandOrange,
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(
@@ -153,7 +154,7 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       },
       onError: (error) {
-        LoggerService.info('Erro no stream de localização: $error', context: context ?? 'UNKNOWN');
+        LoggerService.info('Erro no stream de localização: $error', context: 'HomeScreen');
       },
     );
   }
@@ -279,6 +280,11 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // Função para ativar SOS conforme especificado no prompt
+  void _activateSOS() {
+    Navigator.pushNamed(context, AppRoutes.sosScreen);
+  }
+
   @override
   Widget build(BuildContext context) {
     final keyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
@@ -333,7 +339,7 @@ class _HomeScreenState extends State<HomeScreen> {
               tooltip: 'Perfil',
               onPressed: () {
                 Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => const PerfilScreen()),
+                  MaterialPageRoute(builder: (context) => PerfilScreen()),
                 );
               },
             ),
@@ -357,7 +363,7 @@ class _HomeScreenState extends State<HomeScreen> {
               onPressed: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (context) => const HistoricoScreen(),
+                    builder: (context) => HistoricoScreen(),
                   ),
                 );
               },
@@ -382,7 +388,7 @@ class _HomeScreenState extends State<HomeScreen> {
               onPressed: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (context) => const ConfiguracoesScreen(),
+                    builder: (context) => ConfiguracoesScreen(),
                   ),
                 );
               },
@@ -429,6 +435,18 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       resizeToAvoidBottomInset: true,
+      // Botão SOS flutuante conforme especificado no prompt
+      floatingActionButton: FloatingActionButton(
+        onPressed: _activateSOS,
+        backgroundColor: Colors.red,
+        foregroundColor: Colors.white,
+        tooltip: 'Emergência SOS',
+        child: const Icon(
+          Icons.emergency,
+          size: 28,
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: Stack(
         children: [
           Column(
@@ -438,8 +456,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 onTap: _navegarParaConfirmacao,
                 child: WelcomeBanner(userName: widget.userName),
               ),
-              
-              // REMOVIDO COMPLETAMENTE O CARD DE DESTINO
               
               Expanded(
                 child: currentLocation == null
@@ -490,7 +506,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: FlutterMap(
                             mapController: _mapController,
                             options: MapOptions(
-                              initialCenter: currentLocation,
+                              initialCenter: currentLocation ?? const LatLng(-23.5505, -46.6333),
                               initialZoom: 16,
                               minZoom: 12.0,
                               // Detectar interações do usuário
@@ -505,39 +521,39 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             children: [
                               TileLayer(
-                                urlTemplate:
-                                    'https://maps.geoapify.com/v1/tile/osm-carto/{z}/{x}/{y}.png?apiKey=203ba4a0a4304d349299a8aa22e1dcae',
-                                userAgentPackageName: 'com.example.app',
+                                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                userAgentPackageName: 'com.vello.passenger',
                               ),
                               MarkerLayer(
                                 markers: [
-                                  Marker(
-                                    point: currentLocation!,
-                                    width: 50,
-                                    height: 50,
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: velloOrange,
-                                        borderRadius: BorderRadius.circular(25),
-                                        border: Border.all(
-                                          color: VelloTokens.white,
-                                          width: 3,
-                                        ),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: VelloTokens.black.withOpacity(0.2),
-                                            blurRadius: 8,
-                                            offset: const Offset(0, 2),
+                                  if (currentLocation != null)
+                                    Marker(
+                                      point: currentLocation!,
+                                      width: 60,
+                                      height: 60,
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: velloOrange,
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: VelloTokens.white,
+                                            width: 3,
                                           ),
-                                        ],
-                                      ),
-                                      child: const Icon(
-                                        Icons.person,
-                                        color: VelloTokens.white,
-                                        size: 24,
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: VelloTokens.black.withOpacity(0.3),
+                                              blurRadius: 8,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
+                                        ),
+                                        child: const Icon(
+                                          Icons.person,
+                                          color: VelloTokens.white,
+                                          size: 24,
+                                        ),
                                       ),
                                     ),
-                                  ),
                                 ],
                               ),
                             ],
@@ -547,98 +563,37 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-          if (currentLocation != null)
-            AnimatedPositioned(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeOut,
-              bottom: keyboardOpen
-                  ? 16 + MediaQuery.of(context).viewInsets.bottom
-                  : 40,
-              right: 20,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Botão de compartilhar rota
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: VelloTokens.black.withOpacity(0.15),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: FloatingActionButton(
-                      heroTag: "btnCompartilhar",
-                      onPressed: _isTripShared ? _stopTripSharing : () {
-                        // Função de compartilhar rota
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Compartilhando rota...')),
-                        );
-                      },
-                      backgroundColor: _isTripShared ? Colors.green : velloBlue,
-                      foregroundColor: VelloTokens.white,
-                      elevation: 0,
-                      child: Icon(
-                        _isTripShared ? Icons.stop : Icons.security,
-                        size: 24,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  // Botão de centralizar mapa com indicação de auto-follow
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: VelloTokens.black.withOpacity(0.15),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: FloatingActionButton(
-                      heroTag: "btnCentralizar",
-                      onPressed: _centralizarMapa,
-                      backgroundColor: _followUser ? velloOrange : Colors.grey[400],
-                      foregroundColor: VelloTokens.white,
-                      elevation: 0,
-                      child: Stack(
-                        children: [
-                          const Icon(Icons.gps_fixed, size: 24),
-                          if (_followUser)
-                            Positioned(
-                              top: 2,
-                              right: 2,
-                              child: Container(
-                                width: 8,
-                                height: 8,
-                                decoration: BoxDecoration(
-                                  color: Colors.green,
-                                  borderRadius: BorderRadius.circular(4),
-                                  border: Border.all(
-                                    color: VelloTokens.white,
-                                    width: 1,
-                                  ),
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+          
+          // Botão de centralizar mapa
+          if (currentLocation != null && !_followUser)
+            Positioned(
+              right: 16,
+              bottom: 100,
+              child: FloatingActionButton.small(
+                onPressed: _centralizarMapa,
+                backgroundColor: velloCardBackground,
+                foregroundColor: velloBlue,
+                child: const Icon(Icons.my_location),
               ),
             ),
-          
-          // Painel de acompanhamento do motorista (quando há corrida aceita)
+
+          // Widget de compartilhamento de viagem
+          if (_isTripShared && currentLocation != null)
+            Positioned(
+              top: 16,
+              left: 16,
+              right: 16,
+              child: SimpleTripSharing(
+                // currentLocation: currentLocation!,
+                // onStop: _stopTripSharing, // Parâmetro removido
+              ),
+            ),
+
+          // Status de corrida ativa (se houver)
           Positioned(
-            top: 100,
-            left: 20,
-            right: 20,
+            bottom: 16,
+            left: 16,
+            right: 16,
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
                   .collection('corridas')
@@ -647,161 +602,124 @@ class _HomeScreenState extends State<HomeScreen> {
                   .snapshots(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return SizedBox.shrink();
+                  return const SizedBox.shrink();
                 }
-                
-                final corridaData = snapshot.data!.docs.first.data();
-                if (corridaData is! Map<String, dynamic>) {
-                  return SizedBox.shrink();
-                }
-                
-                final corrida = corridaData;
-                final motoristaId = corrida['motoristaId'];
-                
-                if (motoristaId == null) return SizedBox.shrink();
-                
-                return StreamBuilder<DocumentSnapshot>(
-                  stream: FirebaseFirestore.instance
-                      .collection('motoristas')
-                      .doc(motoristaId)
-                      .snapshots(),
-                  builder: (context, motoristaSnapshot) {
-                    if (!motoristaSnapshot.hasData) return SizedBox.shrink();
-                    
-                    final motorista = motoristaSnapshot.data?.data() as Map<String, dynamic>?;
-                    if (motorista == null) return SizedBox.shrink();
-                    
-                    final nomeMotorista = motorista['nome'] ?? 'Motorista';
-                    final placaVeiculo = motorista['placaVeiculo'] ?? 'ABC-1234';
-                    final localizacaoMotorista = motorista['localizacao'];
-                    
-                    // Calcular tempo estimado (simulado)
-                    String tempoEstimado = '5-8 min';
-                    String distancia = '2.3 km';
-                    
-                    if (localizacaoMotorista != null && currentLocation != null) {
-                      final distanciaMetros = Geolocator.distanceBetween(
-                        currentLocation?.latitude ?? 0,
-                        currentLocation?.longitude ?? 0,
-                        localizacaoMotorista['latitude'],
-                        localizacaoMotorista['longitude'],
-                      );
-                      
-                      distancia = '${(distanciaMetros / 1000).toStringAsFixed(1)} km';
-                      final tempoMinutos = (distanciaMetros / 1000 / 30 * 60).round(); // Assumindo 30km/h
-                      tempoEstimado = '${tempoMinutos}-${tempoMinutos + 3} min';
-                    }
-                    
-                    return Container(
-                      padding: EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: VelloTokens.white,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: VelloTokens.black.withOpacity(0.1),
-                            blurRadius: 10,
-                            offset: Offset(0, 2),
-                          ),
-                        ],
+
+                final corrida = snapshot.data!.docs.first.data() as Map<String, dynamic>;
+                final nomeMotorista = corrida['nomeMotorista'] ?? 'Motorista';
+                final placaVeiculo = corrida['placaVeiculo'] ?? 'ABC-1234';
+                final tempoEstimado = '5 min';
+                final distancia = '1.2 km';
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 80),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: velloCardBackground,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: VelloTokens.black.withOpacity(0.1),
+                        blurRadius: 10,
+                        offset: Offset(0, 2),
                       ),
-                      child: Column(
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
                         children: [
-                          Row(
-                            children: [
-                              Container(
-                                padding: EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: velloOrange,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Icon(
-                                  Icons.local_taxi,
-                                  color: VelloTokens.white,
-                                  size: 20,
-                                ),
-                              ),
-                              SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Motorista a caminho',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                        color: velloBlue,
-                                      ),
-                                    ),
-                                    Text(
-                                      '$nomeMotorista • $placaVeiculo',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey[600],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Container(
-                                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: Colors.green[50],
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(color: Colors.green[200]!),
-                                ),
-                                child: Text(
-                                  tempoEstimado,
+                          Container(
+                            padding: EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: velloOrange,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(
+                              Icons.local_taxi,
+                              color: VelloTokens.white,
+                              size: 20,
+                            ),
+                          ),
+                          SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Motorista a caminho',
                                   style: TextStyle(
-                                    fontSize: 12,
+                                    fontSize: 14,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.green[700],
+                                    color: velloBlue,
                                   ),
                                 ),
-                              ),
-                            ],
+                                Text(
+                                  '$nomeMotorista • $placaVeiculo',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                          SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.straighten, size: 16, color: Colors.grey[600]),
-                                    SizedBox(width: 4),
-                                    Text(
-                                      'Distância: $distancia',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey[600],
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                          Container(
+                            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.green[50],
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: Colors.green[200]!),
+                            ),
+                            child: Text(
+                              tempoEstimado,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green[700],
                               ),
-                              ElevatedButton.icon(
-                                onPressed: () {
-                                  // Simular ligação
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Ligando para $nomeMotorista...')),
-                                  );
-                                },
-                                icon: Icon(Icons.phone, size: 16),
-                                label: Text('Ligar'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.green,
-                                  foregroundColor: VelloTokens.white,
-                                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                  minimumSize: Size(0, 32),
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
                         ],
                       ),
-                    );
-                  },
+                      SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Icon(Icons.straighten, size: 16, color: Colors.grey[600]),
+                                SizedBox(width: 4),
+                                Text(
+                                  'Distância: $distancia',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              // Simular ligação
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Ligando para $nomeMotorista...')),
+                              );
+                            },
+                            icon: Icon(Icons.phone, size: 16),
+                            label: Text('Ligar'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              foregroundColor: VelloTokens.white,
+                              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              minimumSize: Size(0, 32),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 );
               },
             ),

@@ -235,7 +235,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       Navigator.pop(context);
     } catch (e) {
-      LoggerService.info('Erro ao salvar cadastro: $e', context: context ?? 'UNKNOWN');
+      LoggerService.info('Erro ao salvar cadastro: $e', context: 'Service');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(

@@ -1,6 +1,6 @@
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'secure_storage_service.dart';
 import '../core/logger_service.dart';
 import '../core/error_handler.dart';
@@ -30,7 +30,7 @@ class AuthPermanenteService {
           dadosUsuario = userDoc.data() ?? {};
         }
       } catch (e) {
-        LoggerService.info('Erro ao buscar dados do usuário: $e', context: context ?? 'UNKNOWN');
+        LoggerService.error('Erro ao buscar dados do usuário: $e', context: 'AUTH_SERVICE');
       }
 
       // Salvar dados localmente (dados não-sensíveis)
@@ -44,10 +44,10 @@ class AuthPermanenteService {
       // Salvar token seguro no armazenamento criptografado
       await SecureStorageService.saveAuthToken(user.uid);
 
-      LoggerService.success(' Usuário salvo localmente para login permanente: ${user.uid}', context: context ?? 'UNKNOWN');
-      LoggerService.info('🔐 Token seguro gerado e armazenado', context: context ?? 'UNKNOWN');
+      LoggerService.success('Usuário salvo localmente para login permanente: ${user.uid}', context: 'AUTH_SERVICE');
+      LoggerService.info('🔐 Token seguro gerado e armazenado', context: 'AUTH_SERVICE');
     } catch (e) {
-      LoggerService.error(' Erro ao salvar usuário localmente: $e', context: context ?? 'UNKNOWN');
+      LoggerService.error('Erro ao salvar usuário localmente: $e', context: 'AUTH_SERVICE');
     }
   }
 
@@ -61,7 +61,7 @@ class AuthPermanenteService {
       // Usuário está logado se tem dados locais E token seguro válido
       return localLogin && hasToken;
     } catch (e) {
-      LoggerService.info('Erro ao verificar login: $e', context: context ?? 'UNKNOWN');
+      LoggerService.error('Erro ao verificar login: $e', context: 'AUTH_SERVICE');
       return false;
     }
   }
@@ -79,7 +79,7 @@ class AuthPermanenteService {
         'dataLogin': prefs.getString(_keyDataLogin),
       };
     } catch (e) {
-      LoggerService.info('Erro ao obter dados locais: $e', context: context ?? 'UNKNOWN');
+      LoggerService.error('Erro ao obter dados locais: $e', context: 'AUTH_SERVICE');
       return {};
     }
   }
@@ -97,10 +97,10 @@ class AuthPermanenteService {
       // 3. Fazer logout do Firebase
       await FirebaseAuth.instance.signOut();
       
-      LoggerService.success(' Logout completo realizado', context: context ?? 'UNKNOWN');
-      LoggerService.info('🧹 Dados seguros limpos', context: context ?? 'UNKNOWN');
+      LoggerService.success('Logout completo realizado', context: 'AUTH_SERVICE');
+      LoggerService.info('🧹 Dados seguros limpos', context: 'AUTH_SERVICE');
     } catch (e) {
-      LoggerService.info('Erro no logout: $e', context: context ?? 'UNKNOWN');
+      LoggerService.error('Erro no logout: $e', context: 'AUTH_SERVICE');
     }
   }
 
@@ -110,7 +110,7 @@ class AuthPermanenteService {
       // 1. Tentar usuário do Firebase Auth primeiro
       User? user = FirebaseAuth.instance.currentUser;
       if (user != null) {
-        LoggerService.success(' Usuário do Firebase Auth: ${user.uid}', context: context ?? 'UNKNOWN');
+        LoggerService.success('Usuário do Firebase Auth: ${user.uid}', context: 'AUTH_SERVICE');
         return user;
       }
 
@@ -119,30 +119,30 @@ class AuthPermanenteService {
       final isLogado = await isUsuarioLogado();
       
       if (isLogado && dadosLocais['uid'] != null) {
-        LoggerService.success('Usuário com token seguro válido: ${dadosLocais['uid']}', context: 'AUTH');
+        LoggerService.success('Usuário com token seguro válido: ${dadosLocais['uid']}', context: 'AUTH_SERVICE');
         
         // Tentar reautenticar silenciosamente
         try {
           // Aguardar um pouco para Firebase inicializar
-          await Future.delayed(Duration(seconds: 1));
+          await Future.delayed(const Duration(seconds: 1));
           user = FirebaseAuth.instance.currentUser;
           
           if (user != null && user.uid == dadosLocais['uid']) {
-            LoggerService.success(' Reautenticação silenciosa bem-sucedida com token seguro', context: context ?? 'UNKNOWN');
+            LoggerService.success('Reautenticação silenciosa bem-sucedida com token seguro', context: 'AUTH_SERVICE');
             return user;
           }
         } catch (e) {
-          LoggerService.info('Erro na reautenticação silenciosa: $e', context: context ?? 'UNKNOWN');
+          LoggerService.error('Erro na reautenticação silenciosa: $e', context: 'AUTH_SERVICE');
         }
         
-        LoggerService.warning(' Usando dados locais com token seguro como fallback', context: context ?? 'UNKNOWN');
+        LoggerService.warning('Usando dados locais com token seguro como fallback', context: 'AUTH_SERVICE');
         return null; // Retorna null mas dados locais com token serão usados
       }
 
-      LoggerService.error(' Nenhum usuário encontrado ou token inválido', context: context ?? 'UNKNOWN');
+      LoggerService.error('Nenhum usuário encontrado ou token inválido', context: 'AUTH_SERVICE');
       return null;
     } catch (e) {
-      LoggerService.error(' Erro ao obter usuário sempre logado: $e', context: context ?? 'UNKNOWN');
+      LoggerService.error('Erro ao obter usuário sempre logado: $e', context: 'AUTH_SERVICE');
       return null;
     }
   }
@@ -151,14 +151,33 @@ class AuthPermanenteService {
   static Future<void> limparApenasTokens() async {
     try {
       await SecureStorageService.clearAuthTokens();
-      LoggerService.info('🔐 Apenas tokens de autenticação foram limpos', context: context ?? 'UNKNOWN');
+      LoggerService.info('🔐 Apenas tokens de autenticação foram limpos', context: 'AUTH_SERVICE');
     } catch (e) {
-      LoggerService.info('Erro ao limpar tokens: $e', context: context ?? 'UNKNOWN');
+      LoggerService.error('Erro ao limpar tokens: $e', context: 'AUTH_SERVICE');
     }
   }
 
   /// Verifica se o token de autenticação ainda é válido
   static Future<bool> isTokenValido() async {
     return await SecureStorageService.hasValidToken();
+  }
+
+  /// Obtém dados do usuário logado
+  static Future<Map<String, dynamic>> getUserData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      
+      return {
+        'uid': prefs.getString(_keyUsuarioUid) ?? '',
+        'email': prefs.getString(_keyUsuarioEmail) ?? '',
+        'nome': prefs.getString(_keyUsuarioNome) ?? '',
+        'name': prefs.getString(_keyUsuarioNome) ?? '', // Alias para compatibilidade
+        'telefone': prefs.getString(_keyUsuarioTelefone) ?? '',
+        'dataLogin': prefs.getString(_keyDataLogin) ?? '',
+      };
+    } catch (e) {
+      LoggerService.error('Erro ao obter dados do usuário: $e', context: 'AUTH_SERVICE');
+      return {};
+    }
   }
 }

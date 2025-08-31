@@ -1,0 +1,13 @@
+--- /app/lib/utils/validators.dart	2025-08-30 20:58:54.368548874 +0000
++++ lib/utils/validators.dart	2025-08-30 21:00:35.546538445 +0000
+@@ -177,8 +177,8 @@
+     // Cada palavra deve ter pelo menos 2 caracteres
+     for (final word in words) {
+       if (word.length < 2) return false;
+-      // Deve conter apenas letras e alguns caracteres especiais
+-      if (!RegExp(r'^[a-zA-ZÀ-ÿ\s\'-]+$').hasMatch(word)) return false;
++      // CORREÇÃO: Regex segura com raw string
++      if (!RegExp(r"^[A-Za-zÀ-ÿ\s'\-]+$").hasMatch(word)) return false;
+     }
+     
+     return true;

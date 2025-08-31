@@ -146,7 +146,7 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16,
-                color: VelloTokens.black87,
+                color: Colors.black87,
                 height: 1.5,
               ),
             ),
@@ -870,7 +870,7 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
         ),
       );
     } catch (e) {
-      LoggerService.info('Erro ao ativar emergência: $e', context: context ?? 'UNKNOWN');
+      LoggerService.info('Erro ao ativar emergência: $e', context: 'EmergencyScreen');
       setState(() {
         _emergencyTriggered = false;
       });

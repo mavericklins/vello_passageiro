@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:vello/services/firebase_service.dart';
-import 'package:vello/services/geoapify_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../services/firebase_service.dart';
+import '../../services/geoapify_service.dart';
 import '../../theme/vello_tokens.dart';
 import '../../core/logger_service.dart';
 import '../../core/error_handler.dart';
@@ -13,7 +14,7 @@ class FavoriteAddressesScreen extends StatefulWidget {
 }
 
 class _FavoriteAddressesScreenState extends State<FavoriteAddressesScreen> {
-  final FirebaseService _firebaseService = FirebaseService();
+  final FirebaseService _firebaseService = FirebaseService.instance;
   final GeoapifyService _geoapifyService = GeoapifyService();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
@@ -46,16 +47,16 @@ class _FavoriteAddressesScreenState extends State<FavoriteAddressesScreen> {
 
     try {
       await _firebaseService.addFavoriteAddress(
-        _nameController.text.trim(),
-        _addressController.text.trim(),
-        addressCoords["lat"]!,
-        addressCoords["lon"]!,
+        label: _nameController.text.trim(),
+        address: _addressController.text.trim(),
+        lat: addressCoords["lat"]!,
+        lng: addressCoords["lon"]!,
       );
       _showSnackBar("Endereço favorito adicionado com sucesso!", Colors.green);
       _nameController.clear();
       _addressController.clear();
     } catch (e) {
-      LoggerService.info("Erro ao adicionar endereço favorito: $e", context: context ?? "UNKNOWN");
+      LoggerService.info("Erro ao adicionar endereço favorito: $e", context: 'favorite_addresses_screen');
       _showSnackBar("Erro ao adicionar endereço favorito. Tente novamente.", Colors.red);
     }
   }
@@ -65,7 +66,7 @@ class _FavoriteAddressesScreenState extends State<FavoriteAddressesScreen> {
       await _firebaseService.deleteFavoriteAddress(addressId);
       _showSnackBar("Endereço favorito removido com sucesso!", Colors.green);
     } catch (e) {
-      LoggerService.info("Erro ao remover endereço favorito: $e", context: context ?? "UNKNOWN");
+      LoggerService.info("Erro ao remover endereço favorito: $e", context: 'favorite_addresses_screen');
       _showSnackBar("Erro ao remover endereço favorito. Tente novamente.", Colors.red);
     }
   }
@@ -101,7 +102,7 @@ class _FavoriteAddressesScreenState extends State<FavoriteAddressesScreen> {
           icon: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const VelloTokens.gray200,
+              color: VelloTokens.gray200,
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Icon(
@@ -208,7 +209,7 @@ class _FavoriteAddressesScreenState extends State<FavoriteAddressesScreen> {
             ),
           ),
           Expanded(
-            child: StreamBuilder<List<Map<String, dynamic>>>(
+            child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
               stream: _firebaseService.getFavoriteAddresses(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
@@ -217,24 +218,25 @@ class _FavoriteAddressesScreenState extends State<FavoriteAddressesScreen> {
                 if (snapshot.hasError) {
                   return Center(child: Text("Erro: ${snapshot.error}"));
                 }
-                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                   return const Center(child: Text("Nenhum endereço favorito adicionado ainda."));
                 }
                 return ListView.builder(
-                  itemCount: snapshot.data!.length,
+                  itemCount: snapshot.data!.docs.length,
                   itemBuilder: (context, index) {
-                    final address = snapshot.data![index];
+                    final doc = snapshot.data!.docs[index];
+                    final address = doc.data();
                     return Card(
                       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       elevation: 2,
                       child: ListTile(
                         leading: const Icon(Icons.location_on, color: velloBlue),
-                        title: Text(address["name"]),
-                        subtitle: Text(address["address"]),
+                        title: Text(address["label"] ?? address["name"] ?? ""),
+                        subtitle: Text(address["address"] ?? ""),
                         trailing: IconButton(
                           icon: const Icon(Icons.delete, color: Colors.redAccent),
-                          onPressed: () => _deleteFavoriteAddress(address["id"]),
+                          onPressed: () => _deleteFavoriteAddress(doc.id),
                         ),
                       ),
                     );
@@ -248,5 +250,3 @@ class _FavoriteAddressesScreenState extends State<FavoriteAddressesScreen> {
     );
   }
 }
-
-

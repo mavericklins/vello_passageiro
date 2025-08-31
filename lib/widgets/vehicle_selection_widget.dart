@@ -328,11 +328,11 @@ class _VehicleSelectionWidgetState extends State<VehicleSelectionWidget> {
   Color _getVehicleColor(VehicleType vehicleType) {
     switch (vehicleType) {
       case VehicleType.economico:
-        return const VelloTokens.success; // Verde
+        return VelloTokens.success; // Verde
       case VehicleType.executivo:
-        return const VelloTokens.info; // Azul
+        return VelloTokens.secondary; // Azul
       case VehicleType.premium:
-        return const VelloTokens.info; // Roxo
+        return VelloTokens.secondary; // Roxo
     }
   }
 }

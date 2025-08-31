@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../theme/vello_tokens.dart';
 import '../../core/logger_service.dart';
 import '../../core/error_handler.dart';
+import '../../services/emergency_service.dart';
 
 class SimpleTripSharing extends StatefulWidget {
   @override
@@ -11,7 +13,46 @@ class SimpleTripSharing extends StatefulWidget {
 
 class _SimpleTripSharingState extends State<SimpleTripSharing> {
   bool _isActive = false;
-  List<String> _emergencyContacts = [];
+  List<EmergencyContact> _emergencyContacts = [];
+  Position? _currentPosition;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadEmergencyContacts();
+    _getCurrentLocation();
+  }
+
+  void _loadEmergencyContacts() {
+    EmergencyService.getEmergencyContacts().listen(
+      (contacts) {
+        if (mounted) {
+          setState(() {
+            _emergencyContacts = contacts;
+          });
+        }
+      },
+      onError: (error) {
+        LoggerService.error('Erro ao carregar contatos de emergência: $error', context: 'SimpleTripSharing');
+      },
+    );
+  }
+
+  Future<void> _getCurrentLocation() async {
+    try {
+      final permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        await Geolocator.requestPermission();
+      }
+
+      _currentPosition = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+      setState(() {});
+    } catch (e) {
+      LoggerService.error('Erro ao obter localização: $e', context: 'SimpleTripSharing');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +66,7 @@ class _SimpleTripSharingState extends State<SimpleTripSharing> {
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: VelloTokens.black26,
+              color: VelloTokens.black.withOpacity(0.26),
               blurRadius: 8,
               offset: Offset(0, 4),
             ),
@@ -49,6 +90,40 @@ class _SimpleTripSharingState extends State<SimpleTripSharing> {
   }
 
   void _startSharing() {
+    if (_emergencyContacts.isEmpty) {
+      // Mostrar diálogo orientando a cadastrar contatos
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.warning, color: Colors.orange),
+              SizedBox(width: 8),
+              Text('Nenhum Contato Cadastrado'),
+            ],
+          ),
+          content: Text(
+            'Você precisa cadastrar contatos de emergência para compartilhar sua viagem.\n\nDeseja cadastrar agora?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, '/emergency-contacts');
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: VelloTokens.brandOrange),
+              child: Text('Cadastrar Contatos', style: TextStyle(color: VelloTokens.white)),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -56,20 +131,16 @@ class _SimpleTripSharingState extends State<SimpleTripSharing> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Compartilhe sua localização com contatos de confiança para maior segurança.'),
+            Text('Compartilhe sua localização com seus contatos de emergência para maior segurança.'),
             SizedBox(height: 16),
-            TextField(
-              decoration: InputDecoration(
-                hintText: 'Número do WhatsApp (ex: 5511999999999)',
-                border: OutlineInputBorder(),
-              ),
-              onSubmitted: (value) {
-                if (value.isNotEmpty) {
-                  _addContact(value);
-                  Navigator.pop(context);
-                }
-              },
+            Text(
+              'Serão notificados ${_emergencyContacts.length} contato${_emergencyContacts.length > 1 ? 's' : ''}:',
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
+            SizedBox(height: 8),
+            ..._emergencyContacts.take(3).map((contact) => Text('• ${contact.name}')),
+            if (_emergencyContacts.length > 3)
+              Text('• ... e mais ${_emergencyContacts.length - 3} contato${_emergencyContacts.length - 3 > 1 ? 's' : ''}'),
           ],
         ),
         actions: [
@@ -82,27 +153,26 @@ class _SimpleTripSharingState extends State<SimpleTripSharing> {
               Navigator.pop(context);
               _activateSharing();
             },
-            child: Text('Ativar'),
+            child: Text('Ativar Compartilhamento'),
           ),
         ],
       ),
     );
   }
 
-  void _addContact(String contact) {
-    setState(() {
-      _emergencyContacts.add(contact);
-    });
-  }
-
-  void _activateSharing() {
+  void _activateSharing() async {
     setState(() {
       _isActive = true;
     });
 
-    // Enviar mensagem para contatos
-    for (String contact in _emergencyContacts) {
-      _sendWhatsAppMessage(contact);
+    // Atualizar localização antes de enviar
+    await _getCurrentLocation();
+
+    // Enviar mensagem para todos os contatos cadastrados
+    if (_currentPosition != null && _emergencyContacts.isNotEmpty) {
+      for (EmergencyContact contact in _emergencyContacts) {
+        await _sendLocationMessage(contact);
+      }
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -126,14 +196,20 @@ class _SimpleTripSharingState extends State<SimpleTripSharing> {
     );
   }
 
-  void _sendWhatsAppMessage(String phoneNumber) async {
+  Future<void> _sendLocationMessage(EmergencyContact contact) async {
+    if (_currentPosition == null) return;
+
+    final lat = _currentPosition!.latitude;
+    final lng = _currentPosition!.longitude;
+    final mapsLink = 'https://maps.google.com/?q=$lat,$lng';
+    
     final message = '''
 🚗 Vello - Compartilhamento de Viagem
 
-Olá! Estou usando o Vello e compartilhei minha viagem com você para maior segurança.
+Olá, ${contact.name}! Estou usando o Vello e compartilhei minha viagem com você para maior segurança.
 
 ⏰ Iniciado às: ${DateTime.now().toString().substring(11, 16)}
-📍 Acompanhe em tempo real
+📍 Minha localização: $mapsLink
 
 🛡️ Recursos de Segurança:
 • Localização em tempo real
@@ -144,15 +220,13 @@ Olá! Estou usando o Vello e compartilhei minha viagem com você para maior segu
 Vello - Mobilidade segura!
     ''';
 
-    final url = 'https://wa.me/$phoneNumber?text=${Uri.encodeComponent(message)}';
+    final phoneNumber = contact.phone.replaceAll(RegExp(r'[^\d]'), '');
     
     try {
-      if (await canLaunch(url)) {
-        await launch(url);
-      }
+      // Tentar enviar via WhatsApp
+      await EmergencyService.shareLocationWhatsApp(phoneNumber, lat, lng);
     } catch (e) {
-      LoggerService.info('Erro ao abrir WhatsApp: $e', context: context ?? 'UNKNOWN');
+      LoggerService.error('Erro ao enviar mensagem para ${contact.name}: $e', context: 'SimpleTripSharing');
     }
   }
 }
-

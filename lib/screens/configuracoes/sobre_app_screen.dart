@@ -91,7 +91,7 @@ class SobreAppScreen extends StatelessWidget {
             _buildSection(
               title: 'Nossa História',
               icon: Icons.history,
-              iconColor: const VelloTokens.infoCyan,
+              iconColor: VelloTokens.infoCyan,
               content: 'Bem-vindo ao Vello Mobilidade! Nascemos da necessidade de revolucionar o transporte urbano no Brasil. Nossa plataforma foi desenvolvida com tecnologia de ponta para oferecer uma experiência de mobilidade eficiente, segura e sustentável.\n\nConectamos passageiros a motoristas parceiros de forma inteligente e intuitiva, garantindo que você chegue ao seu destino com máxima tranquilidade e conforto.',
             ),
 
@@ -105,28 +105,28 @@ class SobreAppScreen extends StatelessWidget {
             _buildSection(
               title: 'Nossos Valores',
               icon: Icons.favorite,
-              iconColor: const VelloTokens.success,
+              iconColor: VelloTokens.success,
               content: '• Segurança em primeiro lugar\n• Transparência em todas as operações\n• Inovação constante\n• Respeito e inclusão\n• Sustentabilidade ambiental\n• Compromisso com a comunidade',
             ),
 
             _buildSection(
               title: 'O que oferecemos',
               icon: Icons.star,
-              iconColor: const VelloTokens.info,
+              iconColor: VelloTokens.info,
               content: '• Viagens seguras com monitoramento em tempo real\n• Motoristas parceiros verificados e qualificados\n• Preços justos e transparentes\n• Múltiplas opções de pagamento (PIX, cartão, dinheiro)\n• Sistema de avaliação bidirecional\n• Suporte 24/7 dedicado ao usuário\n• Tecnologia de geolocalização precisa\n• Histórico completo de viagens',
             ),
 
             _buildSection(
               title: 'Tecnologia e Inovação',
               icon: Icons.phone_android,
-              iconColor: const VelloTokens.infoDark,
+              iconColor: VelloTokens.infoDark,
               content: 'Utilizamos as mais avançadas tecnologias de desenvolvimento mobile e inteligência artificial para garantir:\n\n• Interface intuitiva e responsiva\n• Algoritmos de otimização de rotas\n• Sistema de matching inteligente\n• Segurança de dados com criptografia\n• Atualizações constantes baseadas no feedback dos usuários',
             ),
 
             _buildSection(
               title: 'Compromisso Social',
               icon: Icons.people,
-              iconColor: const VelloTokens.success,
+              iconColor: VelloTokens.success,
               content: 'A Vello Mobilidade está comprometida com o desenvolvimento social e econômico das comunidades onde atua. Geramos oportunidades de renda para milhares de motoristas parceiros e contribuímos para a redução do trânsito urbano através do compartilhamento inteligente de viagens.',
             ),
 
@@ -324,4 +324,3 @@ class SobreAppScreen extends StatelessWidget {
     );
   }
 }
-

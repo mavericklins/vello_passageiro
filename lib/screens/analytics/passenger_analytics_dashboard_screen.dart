@@ -148,7 +148,7 @@ class _PassengerAnalyticsDashboardScreenState extends State<PassengerAnalyticsDa
               'Viagens',
               _analyticsData?['totalTrips'] ?? '0',
               Icons.directions_car,
-              const VelloTokens.brandOrange,
+              VelloTokens.brandOrange,
               _analyticsData?['totalTripsChange'] ?? '+0%',
             ),
           ),

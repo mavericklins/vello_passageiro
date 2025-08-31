@@ -48,7 +48,7 @@ class PassengerGoalsService extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     } catch (e) {
-      LoggerService.error(' Erro ao carregar metas: $e', context: context ?? 'UNKNOWN');
+      LoggerService.error(' Erro ao carregar metas: $e', context: 'passenger_goals_service');
       _isLoading = false;
       notifyListeners();
     }
@@ -92,7 +92,7 @@ class PassengerGoalsService extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     } catch (e) {
-      LoggerService.error(' Erro ao gerar metas personalizadas: $e', context: context ?? 'UNKNOWN');
+      LoggerService.error(' Erro ao gerar metas personalizadas: $e', context: 'passenger_goals_service');
       _isLoading = false;
       notifyListeners();
     }
@@ -119,7 +119,7 @@ class PassengerGoalsService extends ChangeNotifier {
     };
 
     final metaId = await _passengerGoalsCollection.add(metaData);
-    LoggerService.success(' Meta de corridas semanais criada: ${metaId.id}', context: context ?? 'UNKNOWN');
+    LoggerService.success(' Meta de corridas semanais criada: ${metaId.id}', context: 'passenger_goals_service');
   }
 
   /// Cria meta de economia mensal
@@ -144,7 +144,7 @@ class PassengerGoalsService extends ChangeNotifier {
     };
 
     final metaId = await _passengerGoalsCollection.add(metaData);
-    LoggerService.success(' Meta de economia mensal criada: ${metaId.id}', context: context ?? 'UNKNOWN');
+    LoggerService.success(' Meta de economia mensal criada: ${metaId.id}', context: 'passenger_goals_service');
   }
 
   /// Cria meta de avaliação
@@ -166,7 +166,7 @@ class PassengerGoalsService extends ChangeNotifier {
     };
 
     final metaId = await _passengerGoalsCollection.add(metaData);
-    LoggerService.success(' Meta de avaliação criada: ${metaId.id}', context: context ?? 'UNKNOWN');
+    LoggerService.success(' Meta de avaliação criada: ${metaId.id}', context: 'passenger_goals_service');
   }
 
   /// Cria meta eco-friendly
@@ -188,7 +188,7 @@ class PassengerGoalsService extends ChangeNotifier {
     };
 
     final metaId = await _passengerGoalsCollection.add(metaData);
-    LoggerService.success(' Meta eco-friendly criada: ${metaId.id}', context: context ?? 'UNKNOWN');
+    LoggerService.success(' Meta eco-friendly criada: ${metaId.id}', context: 'passenger_goals_service');
   }
 
   /// Atualiza progresso das metas baseado nas ações do passageiro
@@ -234,7 +234,7 @@ class PassengerGoalsService extends ChangeNotifier {
       // Recarregar metas após atualização
       await carregarMetas();
     } catch (e) {
-      LoggerService.error(' Erro ao atualizar progresso das metas: $e', context: context ?? 'UNKNOWN');
+      LoggerService.error(' Erro ao atualizar progresso das metas: $e', context: 'passenger_goals_service');
     }
   }
 
@@ -319,7 +319,7 @@ class PassengerGoalsService extends ChangeNotifier {
       'updatedAt': FieldValue.serverTimestamp(),
     });
 
-    LoggerService.info('🎉 Meta $metaId completada!', context: context ?? 'UNKNOWN');
+    LoggerService.info('🎉 Meta $metaId completada!', context: 'passenger_goals_service');
   }
 
   /// Cria meta personalizada
@@ -347,7 +347,7 @@ class PassengerGoalsService extends ChangeNotifier {
       await _passengerGoalsCollection.add(metaData);
       await carregarMetas();
     } catch (e) {
-      LoggerService.error(' Erro ao criar meta: $e', context: context ?? 'UNKNOWN');
+      LoggerService.error(' Erro ao criar meta: $e', context: 'passenger_goals_service');
     }
   }
 
@@ -436,7 +436,7 @@ class PassengerGoalsService extends ChangeNotifier {
         'sharedRides': sharedRides,
       };
     } catch (e) {
-      LoggerService.error(' Erro ao obter estatísticas: $e', context: context ?? 'UNKNOWN');
+      LoggerService.error(' Erro ao obter estatísticas: $e', context: 'passenger_goals_service');
       return {};
     }
   }
@@ -482,7 +482,7 @@ class PassengerGoalsService extends ChangeNotifier {
         'sharedRides': sharedRides,
       };
     } catch (e) {
-      LoggerService.error(' Erro ao obter estatísticas de período: $e', context: context ?? 'UNKNOWN');
+      LoggerService.error(' Erro ao obter estatísticas de período: $e', context: 'passenger_goals_service');
       return {};
     }
   }

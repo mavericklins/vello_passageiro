@@ -1,0 +1,33 @@
+--- /app/lib/core/logger_service.dart	2025-08-30 20:58:54.355548875 +0000
++++ lib/core/logger_service.dart	2025-08-30 21:00:35.547538445 +0000
+@@ -46,8 +46,8 @@
+     dynamic error,
+     dynamic data,
+   }) {
+-    // Não faz log se o nível for menor que o configurado
+-    if (level.index < _currentLevel.index) return;
++    // CORREÇÃO: Usar 'code' ao invés de 'index' para evitar conflito com Enum.index
++    if (level.code < _currentLevel.code) return;
+ 
+     if (!_isInitialized) {
+       initialize();
+@@ -129,15 +129,16 @@
+ 
+ /// Níveis de log disponíveis
+ enum LogLevel {
++  // CORREÇÃO: Renomear 'index' para 'code' para evitar conflito com Enum.index
+   debug(0, '🔍', 'DEBUG'),
+   info(1, 'ℹ️', 'INFO'),
+   success(2, '✅', 'SUCCESS'),
+   warning(3, '⚠️', 'WARNING'),
+   error(4, '❌', 'ERROR');
+ 
+-  const LogLevel(this.index, this.emoji, this.name);
++  const LogLevel(this.code, this.emoji, this.name);
+   
+-  final int index;
++  final int code;
+   final String emoji;
+   final String name;
+ }
+\ No newline at end of file

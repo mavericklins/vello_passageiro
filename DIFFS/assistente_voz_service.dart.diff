@@ -1,0 +1,145 @@
+--- /app/lib/services/assistente_voz_service.dart	2025-08-30 20:58:54.365548874 +0000
++++ lib/services/assistente_voz_service.dart	2025-08-30 21:05:36.247507433 +0000
+@@ -37,7 +37,7 @@
+   // Inicializar assistente
+   Future<void> inicializar() async {
+     if (!isEnabled) {
+-      LoggerService.info('Assistente de voz não está habilitado', context: context ?? 'UNKNOWN');
++      LoggerService.info('Assistente de voz não está habilitado', context: 'VOICE_SERVICE');
+       return;
+     }
+ 
+@@ -59,7 +59,7 @@
+         );
+       }
+     } catch (e) {
+-      LoggerService.info('Erro ao inicializar Speech-to-Text: $e', context: context ?? 'UNKNOWN');
++      LoggerService.error('Erro ao inicializar Speech-to-Text: $e', context: 'VOICE_SERVICE');
+       _speechEnabled = false;
+     }
+ 
+@@ -77,7 +77,7 @@
+ 
+       _ttsEnabled = true;
+     } catch (e) {
+-      LoggerService.info('Erro ao inicializar TTS: $e', context: context ?? 'UNKNOWN');
++      LoggerService.error('Erro ao inicializar TTS: $e', context: 'VOICE_SERVICE');
+       _ttsEnabled = false;
+     }
+   }
+@@ -89,8 +89,8 @@
+     try {
+       await _speechToText.listen(
+         onResult: _onSpeechResult,
+-        listenFor: Duration(seconds: 30),
+-        pauseFor: Duration(seconds: 5),
++        listenFor: const Duration(seconds: 30),
++        pauseFor: const Duration(seconds: 5),
+         partialResults: true,
+         localeId: 'pt_BR',
+         cancelOnError: true,
+@@ -102,7 +102,7 @@
+       // Som de início
+       await falar('Estou escutando...');
+     } catch (e) {
+-      LoggerService.info('Erro ao iniciar escuta: $e', context: context ?? 'UNKNOWN');
++      LoggerService.error('Erro ao iniciar escuta: $e', context: 'VOICE_SERVICE');
+     }
+   }
+ 
+@@ -132,7 +132,7 @@
+ 
+     final comandoLower = comando.toLowerCase().trim();
+ 
+-    LoggerService.info('Comando recebido: $comandoLower', context: context ?? 'UNKNOWN');
++    LoggerService.info('Comando recebido: $comandoLower', context: 'VOICE_SERVICE');
+ 
+     // Comandos básicos para passageiro
+     if (comandoLower.contains('chamar') && comandoLower.contains('uber')) {
+@@ -273,7 +273,7 @@
+     try {
+       await _flutterTts.speak(texto);
+     } catch (e) {
+-      LoggerService.info('Erro ao falar: $e', context: context ?? 'UNKNOWN');
++      LoggerService.error('Erro ao falar: $e', context: 'VOICE_SERVICE');
+     }
+   }
+ 
+@@ -283,7 +283,7 @@
+     try {
+       await _flutterTts.stop();
+     } catch (e) {
+-      LoggerService.info('Erro ao parar fala: $e', context: context ?? 'UNKNOWN');
++      LoggerService.error('Erro ao parar fala: $e', context: 'VOICE_SERVICE');
+     }
+   }
+ 
+@@ -300,7 +300,7 @@
+     try {
+       await _flutterTts.setSpeechRate(velocidade.clamp(0.1, 2.0));
+     } catch (e) {
+-      LoggerService.info('Erro ao configurar velocidade: $e', context: context ?? 'UNKNOWN');
++      LoggerService.error('Erro ao configurar velocidade: $e', context: 'VOICE_SERVICE');
+     }
+   }
+ 
+@@ -310,7 +310,7 @@
+     try {
+       await _flutterTts.setVolume(volume.clamp(0.0, 1.0));
+     } catch (e) {
+-      LoggerService.info('Erro ao configurar volume: $e', context: context ?? 'UNKNOWN');
++      LoggerService.error('Erro ao configurar volume: $e', context: 'VOICE_SERVICE');
+     }
+   }
+ 
+@@ -339,7 +339,7 @@
+ 
+       await falar('Comando personalizado "$nome" adicionado com sucesso');
+     } catch (e) {
+-      LoggerService.info('Erro ao adicionar comando: $e', context: context ?? 'UNKNOWN');
++      LoggerService.error('Erro ao adicionar comando: $e', context: 'VOICE_SERVICE');
+       await falar('Erro ao adicionar comando personalizado');
+     }
+   }
+@@ -380,7 +380,7 @@
+         }
+       }
+     } catch (e) {
+-      LoggerService.info('Erro ao carregar comandos personalizados: $e', context: context ?? 'UNKNOWN');
++      LoggerService.error('Erro ao carregar comandos personalizados: $e', context: 'VOICE_SERVICE');
+     }
+   }
+ 
+@@ -398,7 +398,7 @@
+         'comandosVoz': _comandosPersonalizados,
+       });
+     } catch (e) {
+-      LoggerService.info('Erro ao salvar comandos: $e', context: context ?? 'UNKNOWN');
++      LoggerService.error('Erro ao salvar comandos: $e', context: 'VOICE_SERVICE');
+     }
+   }
+ 
+@@ -416,7 +416,7 @@
+         'timestamp': FieldValue.serverTimestamp(),
+       });
+     } catch (e) {
+-      LoggerService.info('Erro ao salvar log: $e', context: context ?? 'UNKNOWN');
++      LoggerService.error('Erro ao salvar log: $e', context: 'VOICE_SERVICE');
+     }
+   }
+ 
+@@ -424,12 +424,12 @@
+   void ativarModoMaosLivres() {
+     if (!isEnabled) return;
+     // Implementar modo que responde automaticamente a determinados eventos
+-    LoggerService.info('Modo mãos livres ativado', context: context ?? 'UNKNOWN');
++    LoggerService.info('Modo mãos livres ativado', context: 'VOICE_SERVICE');
+   }
+ 
+   void desativarModoMaosLivres() {
+     if (!isEnabled) return;
+-    LoggerService.info('Modo mãos livres desativado', context: context ?? 'UNKNOWN');
++    LoggerService.info('Modo mãos livres desativado', context: 'VOICE_SERVICE');
+   }
+ 
+   @override

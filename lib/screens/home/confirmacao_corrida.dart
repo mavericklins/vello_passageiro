@@ -156,7 +156,7 @@ class _ConfirmacaoCorridaScreenState extends State<ConfirmacaoCorridaScreen> {
         }
       }
     } catch (e) {
-      LoggerService.info('Erro ao obter endereço atual: $e', context: context ?? 'UNKNOWN');
+      LoggerService.info('Erro ao obter endereço atual: $e', context: 'Service');
     }
   }
 
@@ -287,7 +287,7 @@ class _ConfirmacaoCorridaScreenState extends State<ConfirmacaoCorridaScreen> {
         }
       }
     } catch (e) {
-      LoggerService.info('Erro ao obter coordenadas: $e', context: context ?? 'UNKNOWN');
+      LoggerService.info('Erro ao obter coordenadas: $e', context: 'Service');
     }
     return null;
   }

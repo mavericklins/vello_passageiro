@@ -19,18 +19,18 @@ class AdvancedSecurityService {
   Future<void> initialize() async {
     if (!isEnabled) return;
     // Inicialização de recursos avançados
-    LoggerService.success('Advanced Security Service inicializado', context: 'SECURITY');
+    LoggerService.success('Advanced Security Service inicializado', context: 'AdvancedSecurityService');
   }
 
   Future<void> enablePanic() async {
     if (!isEnabled) return;
     // Ativar modo pânico
-    LoggerService.warning('Modo pânico ativado', context: 'SECURITY');
+    LoggerService.warning('Modo pânico ativado', context: 'AdvancedSecurityService');
   }
 
   Future<void> suggestSafePoints() async {
     if (!isEnabled) return;
-    
+
     return await ErrorHandler.safeAsync(() async {
       final position = await Geolocator.getCurrentPosition();
 
@@ -65,47 +65,47 @@ class AdvancedSecurityService {
         final pontoProximo = pontosProximos.first;
         final distanciaKm = (pontoProximo['distance'] / 1000).toStringAsFixed(1);
 
-        LoggerService.info('Ponto seguro mais próximo: ${pontoProximo['nome']} - $distanciaKm km', context: 'SECURITY');
-        
+        LoggerService.info('Ponto seguro mais próximo: ${pontoProximo['nome']} - $distanciaKm km', context: 'AdvancedSecurityService');
+
         // Aqui poderia implementar notificação
         _notifyUser('Ponto seguro próximo', 'O ponto mais próximo está a $distanciaKm km.');
       }
-    }, context: 'suggest_safe_points');
+    }, context: 'AdvancedSecurityService');
   }
 
   Future<void> shareLocation() async {
     if (!isEnabled) return;
-    
+
     return await ErrorHandler.safeAsync(() async {
       final position = await Geolocator.getCurrentPosition();
       final locationUrl = 'https://maps.google.com/?q=${position.latitude},${position.longitude}';
-      
+
       // Compartilhar via WhatsApp ou SMS
       final message = 'EMERGÊNCIA - Minha localização atual: $locationUrl';
-      
+
       // Aqui poderia integrar com contatos de emergência
-      LoggerService.info('Localização compartilhada: $message', context: 'SECURITY');
-      
+      LoggerService.info('Localização compartilhada: $message', context: 'AdvancedSecurityService');
+
       _notifyUser('Localização compartilhada', 'Sua localização foi enviada aos contatos de emergência.');
-    }, context: 'share_location');
+    }, context: 'AdvancedSecurityService');
   }
 
   Future<void> callEmergency(String number) async {
     if (!isEnabled) return;
-    
+
     return await ErrorHandler.safeAsync(() async {
       final uri = Uri(scheme: 'tel', path: number);
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri);
       }
-      
+
       _notifyUser('Ligação de emergência', 'Ligando para $number...');
-    }, context: 'call_emergency');
+    }, context: 'AdvancedSecurityService');
   }
 
   Future<void> sendEmergencyMessage() async {
     if (!isEnabled) return;
-    
+
     return await ErrorHandler.safeAsync(() async {
       final userId = _auth.currentUser?.uid;
       if (userId == null) return;
@@ -144,7 +144,7 @@ Mensagem enviada automaticamente pelo app Vello.
       }
 
       _notifyUser('Mensagem de emergência', 'Mensagens enviadas aos contatos de emergência!');
-    }, context: 'send_emergency_message');
+    }, context: 'AdvancedSecurityService');
   }
 
   Future<void> _sendWhatsAppMessage(String phone, String message) async {
@@ -155,16 +155,16 @@ Mensagem enviada automaticamente pelo app Vello.
       }
 
       final whatsappUrl = 'https://wa.me/$cleanPhone?text=${Uri.encodeComponent(message)}';
-      
+
       if (await canLaunchUrl(Uri.parse(whatsappUrl))) {
         await launchUrl(Uri.parse(whatsappUrl), mode: LaunchMode.externalApplication);
       }
-    }, context: 'send_whatsapp_message');
+    }, context: 'AdvancedSecurityService');
   }
 
   Future<void> activateEmergency() async {
     if (!isEnabled) return;
-    
+
     return await ErrorHandler.safeAsync(() async {
       final userId = _auth.currentUser?.uid;
       if (userId == null) return;
@@ -180,17 +180,17 @@ Mensagem enviada automaticamente pelo app Vello.
 
       // Enviar mensagens para contatos
       await sendEmergencyMessage();
-      
+
       // Sugerir pontos seguros
       await suggestSafePoints();
 
       _notifyUser('Emergência ativada', 'Todos os protocolos de segurança foram acionados!');
-    }, context: 'activate_emergency');
+    }, context: 'AdvancedSecurityService');
   }
 
   Future<void> cancelEmergency() async {
     if (!isEnabled) return;
-    
+
     return await ErrorHandler.safeAsync(() async {
       final userId = _auth.currentUser?.uid;
       if (userId == null) return;
@@ -210,19 +210,21 @@ Mensagem enviada automaticamente pelo app Vello.
       }
 
       _notifyUser('Emergência cancelada', 'O alerta de emergência foi cancelado.');
-    }, context: 'cancel_emergency');
+    }, context: 'AdvancedSecurityService');
   }
 
-  Future<Map<String, dynamic>> _getCurrentLocationData() async {
-    return await ErrorHandler.safeAsync(() async {
+  static Future<Map<String, dynamic>> _getCurrentLocationData() async {
+    final raw = await ErrorHandler.safeAsync(() async {
       final position = await Geolocator.getCurrentPosition();
-      return {
+      return <String, dynamic>{
         'latitude': position.latitude,
         'longitude': position.longitude,
         'accuracy': position.accuracy,
         'timestamp': DateTime.now().toIso8601String(),
       };
-    }, context: 'get_location_data', fallback: {}) ?? {};
+    }, context: 'AdvancedSecurityService', fallback: <String, dynamic>{});
+
+    return raw as Map<String, dynamic>? ?? <String, dynamic>{};
   }
 
   void _notifyUser(String title, String message) {
@@ -233,7 +235,7 @@ Mensagem enviada automaticamente pelo app Vello.
   // Monitoramento em tempo real durante corrida
   Future<void> startRideTracking(String rideId) async {
     if (!isEnabled) return;
-    
+
     return await ErrorHandler.safeAsync(() async {
       final userId = _auth.currentUser?.uid;
       if (userId == null) return;
@@ -247,34 +249,34 @@ Mensagem enviada automaticamente pelo app Vello.
         'trackingPoints': [],
       });
 
-      LoggerService.success('Tracking da corrida iniciado: $rideId', context: 'SECURITY');
-    }, context: 'start_ride_tracking');
+      LoggerService.success('Tracking da corrida iniciado: $rideId', context: 'AdvancedSecurityService');
+    }, context: 'AdvancedSecurityService');
   }
 
   Future<void> updateRideLocation(String rideId) async {
     if (!isEnabled) return;
-    
+
     return await ErrorHandler.safeAsync(() async {
       final locationData = await _getCurrentLocationData();
-      
+
       await _firestore.collection('ride_tracking').doc(rideId).update({
         'lastUpdate': FieldValue.serverTimestamp(),
         'currentLocation': locationData,
         'trackingPoints': FieldValue.arrayUnion([locationData]),
       });
-    }, context: 'update_ride_location');
+    }, context: 'AdvancedSecurityService');
   }
 
   Future<void> stopRideTracking(String rideId) async {
     if (!isEnabled) return;
-    
+
     return await ErrorHandler.safeAsync(() async {
       await _firestore.collection('ride_tracking').doc(rideId).update({
         'isActive': false,
         'endedAt': FieldValue.serverTimestamp(),
       });
 
-      LoggerService.success('Tracking da corrida finalizado: $rideId', context: 'SECURITY');
-    }, context: 'stop_ride_tracking');
+      LoggerService.success('Tracking da corrida finalizado: $rideId', context: 'AdvancedSecurityService');
+    }, context: 'AdvancedSecurityService');
   }
 }

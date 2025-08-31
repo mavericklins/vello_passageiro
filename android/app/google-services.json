@@ -61,6 +61,25 @@
           "other_platform_oauth_client": []
         }
       }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:694167397444:android:895673a4d92be04ab6c811",
+        "android_client_info": {
+          "package_name": "com.vello.passageiro"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB-fVWOzdLDXbxuTO38GRMV4TYCo9-vVR4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
     }
   ],
   "configuration_version": "1"

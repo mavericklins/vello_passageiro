@@ -39,16 +39,16 @@ class _LoginScreenState extends State<LoginScreen> {
       final rememberMeData = await SecureStorageService.getRememberMeData();
       final emailSalvo = rememberMeData['email'];
       final rememberMe = rememberMeData['rememberMe'] == 'true';
-      
+
       if (rememberMe && emailSalvo != null) {
         setState(() {
           _emailController.text = emailSalvo;
           _rememberMe = true;
         });
-        LoggerService.info('📧 Email carregado do armazenamento seguro: $emailSalvo', context: context ?? 'UNKNOWN');
+        LoggerService.info('📧 Email carregado do armazenamento seguro: $emailSalvo', context: 'LoginScreen');
       }
     } catch (e) {
-      LoggerService.warning(' Erro ao carregar credenciais: $e', context: context ?? 'UNKNOWN');
+      LoggerService.warning('⚠️ Erro ao carregar credenciais: $e', context: 'LoginScreen');
     }
   }
 
@@ -60,8 +60,8 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      LoggerService.info('🔐 Iniciando login para: ${_emailController.text}', context: context ?? 'UNKNOWN');
-      
+      LoggerService.info('🔐 Iniciando login para: ${_emailController.text}', context: 'LoginScreen');
+
       // Fazer login no Firebase com email sanitizado
       final sanitizedEmail = Validators.sanitizeEmail(_emailController.text);
       final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
@@ -70,11 +70,11 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (credential.user != null) {
-        LoggerService.success(' Login bem-sucedido: ${credential.user!.email}', context: context ?? 'UNKNOWN');
-        
+        LoggerService.success('✅ Login bem-sucedido: ${credential.user!.email}', context: 'LoginScreen');
+
         // Salvar token seguro e dados "lembrar-me"
         await _salvarDadosSegurosPosLogin(credential.user!);
-        
+
         // Mostrar sucesso
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -94,7 +94,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     } on FirebaseAuthException catch (e) {
       String mensagemErro;
-      
+
       switch (e.code) {
         case 'user-not-found':
           mensagemErro = AppStrings.erroUsuarioNaoEncontrado;
@@ -114,9 +114,9 @@ class _LoginScreenState extends State<LoginScreen> {
         default:
           mensagemErro = 'Erro no login: ${e.message}';
       }
-      
-      LoggerService.error(' Erro de autenticação: ${e.code} - $mensagemErro', context: context ?? 'UNKNOWN');
-      
+
+      LoggerService.error('❌ Erro de autenticação: ${e.code} - $mensagemErro', context: 'LoginScreen', error: e);
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -126,10 +126,10 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         );
       }
-      
+
     } catch (e) {
-      LoggerService.error(' Erro inesperado no login: $e', context: context ?? 'UNKNOWN');
-      
+      LoggerService.error('❌ Erro inesperado no login: $e', context: 'LoginScreen');
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -153,23 +153,23 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       // 1. Salvar token seguro baseado no UID do usuário
       await SecureStorageService.saveAuthToken(user.uid);
-      
+
       // 2. Salvar dados "lembrar-me" se solicitado (apenas email)
       await SecureStorageService.saveRememberMeData(
         _emailController.text.trim(), 
         _rememberMe
       );
-      
+
       // 3. Salvar dados básicos no SharedPreferences (dados não-sensíveis)
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('user_email', _emailController.text.trim());
       await prefs.setBool('user_logged_in', true);
       await prefs.setString('ultimo_login', DateTime.now().toIso8601String());
-      
-      LoggerService.info('🔐 Dados seguros salvos - Token: ✓, Email: ✓, Sem senha em texto plano', context: context ?? 'UNKNOWN');
-      
+
+      LoggerService.info('🔐 Dados seguros salvos - Token: ✓, Email: ✓, Sem senha em texto plano', context: 'LoginScreen');
+
     } catch (e) {
-      LoggerService.warning(' Erro ao salvar dados seguros: $e', context: context ?? 'UNKNOWN');
+      LoggerService.warning('⚠️ Erro ao salvar dados seguros: $e', context: 'LoginScreen');
     }
   }
 
@@ -191,7 +191,7 @@ class _LoginScreenState extends State<LoginScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               SizedBox(height: 60),
-              
+
               // Logo Vello
               Container(
                 height: 120,
@@ -229,9 +229,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                 ),
               ),
-              
+
               SizedBox(height: 40),
-              
+
               // Título
               Text(
                 AppStrings.tituloLogin,
@@ -242,7 +242,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 textAlign: TextAlign.center,
               ),
-              
+
               Text(
                 AppStrings.subtituloLogin,
                 style: TextStyle(
@@ -251,9 +251,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 textAlign: TextAlign.center,
               ),
-              
+
               SizedBox(height: 40),
-              
+
               // Formulário
               Form(
                 key: _formKey,
@@ -286,9 +286,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         return null;
                       },
                     ),
-                    
+
                     SizedBox(height: 20),
-                    
+
                     // Campo Senha
                     TextFormField(
                       controller: _passwordController,
@@ -327,9 +327,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         return null;
                       },
                     ),
-                    
+
                     SizedBox(height: 16),
-                    
+
                     // Checkbox "Lembrar-me"
                     Row(
                       children: [
@@ -365,9 +365,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ],
                     ),
-                    
+
                     SizedBox(height: 30),
-                    
+
                     // Botão Login
                     SizedBox(
                       width: double.infinity,
@@ -403,9 +403,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                 ),
               ),
-              
+
               SizedBox(height: 30),
-              
+
               // Link para registro
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -428,9 +428,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ],
               ),
-              
+
               SizedBox(height: 20),
-              
+
               // Informação sobre login seguro
               Container(
                 padding: EdgeInsets.all(16),

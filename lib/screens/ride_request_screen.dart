@@ -11,6 +11,7 @@ import 'schedule/schedule_ride_screen.dart';
 import '../theme/vello_tokens.dart';
 import '../../core/logger_service.dart';
 import '../../core/error_handler.dart';
+import '../routes/app_routes.dart';
 
 class RideRequestScreen extends StatefulWidget {
   final String? initialDestination;
@@ -81,7 +82,7 @@ class _RideRequestScreenState extends State<RideRequestScreen> {
         });
       }
     } catch (e) {
-      LoggerService.info('Erro ao obter localização: $e', context: context ?? 'UNKNOWN');
+      LoggerService.info('Erro ao obter localização: $e', context: 'RideRequestScreen');
       setState(() => _isLoadingLocation = false);
     }
   }
@@ -139,7 +140,7 @@ class _RideRequestScreenState extends State<RideRequestScreen> {
         });
       }
     } catch (e) {
-      LoggerService.info('Erro ao calcular preços: $e', context: context ?? 'UNKNOWN');
+      LoggerService.info('Erro ao calcular preços: $e', context: 'RideRequestScreen');
       if (mounted) {
         setState(() {
           _isLoadingPrices = false;
@@ -250,14 +251,30 @@ class _RideRequestScreenState extends State<RideRequestScreen> {
       context,
       '/buscando_motoristas',
       arguments: {
-        'origin': _origin!.toMap(),
-        'destination': _destination!.toMap(),
-        'waypoints': _waypoints.map((w) => w.toMap()).toList(),
+        'origin': _origin!.toString(),
+        'destination': _destination!.toString(),
+        'waypoints': _waypoints.map((w) => w.toString()).toList(),
         'vehicleType': _selectedVehicleType.name,
         'estimatedPrice': selectedEstimate.finalPrice,
         'couponCode': _appliedCouponCode,
       },
     );
+  }
+
+  // Nova função para viagem compartilhada conforme especificado no prompt
+  void _createSharedRide() {
+    if (_origin == null || _destination == null) return;
+    
+    Navigator.pushNamed(context, AppRoutes.sharedRide, arguments: {
+      'origin': _origin!.toString(),
+      'destination': _destination!.toString(),
+      'waypoints': _waypoints.map((w) => w.toString()).toList(),
+      'vehicleType': _selectedVehicleType.name,
+      'priceEstimate': _priceEstimates.firstWhere(
+        (e) => e.vehicleType == _selectedVehicleType,
+        orElse: () => _priceEstimates.first,
+      ).toString(),
+    });
   }
   
   @override
@@ -381,7 +398,7 @@ class _RideRequestScreenState extends State<RideRequestScreen> {
               
               const SizedBox(height: 24),
               
-              // Botões de ação
+              // Botões de ação - Atualizado conforme prompt
               _buildActionButtons(),
             ] else if (_isLoadingPrices) ...[
               VehicleSelectionWidget(
@@ -609,6 +626,7 @@ class _RideRequestScreenState extends State<RideRequestScreen> {
     );
   }
   
+  // Botões de ação atualizados conforme especificado no prompt
   Widget _buildActionButtons() {
     final canRequestRide = _origin != null && _destination != null && _priceEstimates.isNotEmpty;
     
@@ -633,6 +651,38 @@ class _RideRequestScreenState extends State<RideRequestScreen> {
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: VelloTokens.white,
+              ),
+            ),
+          ),
+        ),
+        
+        const SizedBox(height: 12),
+        
+        // Botão de viagem compartilhada conforme especificado no prompt
+        SizedBox(
+          width: double.infinity,
+          height: 48,
+          child: OutlinedButton.icon(
+            onPressed: canRequestRide ? _createSharedRide : null,
+            icon: Icon(
+              Icons.group,
+              color: canRequestRide ? Colors.green : Colors.grey[400],
+            ),
+            label: Text(
+              'Viagem Compartilhada',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: canRequestRide ? Colors.green : Colors.grey[400],
+              ),
+            ),
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(
+                color: canRequestRide ? Colors.green : Colors.grey[400]!,
+                width: 2,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
               ),
             ),
           ),
@@ -798,3 +848,4 @@ class _CouponDialogState extends State<_CouponDialog> {
     );
   }
 }
+

@@ -54,7 +54,7 @@ class PrivacidadeScreen extends StatelessWidget {
                     width: 64,
                     height: 64,
                     decoration: BoxDecoration(
-                      color: const VelloTokens.success.withOpacity(0.1),
+                      color: VelloTokens.success.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: const Icon(
@@ -90,14 +90,14 @@ class PrivacidadeScreen extends StatelessWidget {
             _buildSection(
               title: 'Compromisso com sua Privacidade',
               icon: Icons.security,
-              iconColor: const VelloTokens.success,
+              iconColor: VelloTokens.success,
               content: 'A Vello Mobilidade está comprometida em proteger e respeitar sua privacidade. Esta Política de Privacidade explica como coletamos, usamos, armazenamos e protegemos suas informações pessoais quando você utiliza nosso aplicativo e serviços.\n\nNós valorizamos a confiança que você deposita em nós e nos esforçamos para ser transparentes sobre nossas práticas de dados. Esta política se aplica a todos os usuários da plataforma Vello, incluindo passageiros e motoristas parceiros.',
             ),
 
             _buildSection(
               title: 'Informações que Coletamos',
               icon: Icons.info_outline,
-              iconColor: const VelloTokens.infoCyan,
+              iconColor: VelloTokens.infoCyan,
               content: 'Para fornecer nossos serviços de mobilidade, coletamos diferentes tipos de informações:\n\n• Informações de Conta: Nome, e-mail, telefone, CPF e foto de perfil\n• Informações de Localização: Dados de GPS para facilitar corridas e navegação\n• Informações de Pagamento: Dados de cartões de crédito/débito (criptografados)\n• Informações de Viagem: Histórico de corridas, rotas, avaliações\n• Informações do Dispositivo: Modelo, sistema operacional, identificadores únicos\n• Informações de Uso: Como você interage com nosso aplicativo\n\nColetamos essas informações apenas quando necessário para fornecer nossos serviços e sempre com seu consentimento explícito.',
             ),
 
@@ -111,28 +111,28 @@ class PrivacidadeScreen extends StatelessWidget {
             _buildSection(
               title: 'Compartilhamento de Informações',
               icon: Icons.share,
-              iconColor: const VelloTokens.info,
+              iconColor: VelloTokens.secondary,
               content: 'Compartilhamos informações limitadas apenas quando necessário:\n\n• Com Motoristas Parceiros: Nome e localização para facilitar a corrida\n• Com Processadores de Pagamento: Dados necessários para transações seguras\n• Com Autoridades Legais: Quando exigido por lei ou ordem judicial\n• Com Prestadores de Serviços: Empresas que nos ajudam a operar (sempre com contratos de confidencialidade)\n• Em Emergências: Para proteger a segurança dos usuários\n\nTodos os parceiros e prestadores de serviços são rigorosamente selecionados e devem seguir nossos padrões de proteção de dados.',
             ),
 
             _buildSection(
               title: 'Proteção e Segurança dos Dados',
               icon: Icons.lock,
-              iconColor: const VelloTokens.infoDark,
+              iconColor: VelloTokens.secondaryDark,
               content: 'Implementamos medidas de segurança robustas para proteger suas informações:\n\n• Criptografia de ponta a ponta para dados sensíveis\n• Servidores seguros com certificações internacionais\n• Acesso restrito aos dados por funcionários autorizados\n• Monitoramento contínuo contra ameaças cibernéticas\n• Backups seguros e redundantes\n• Auditorias regulares de segurança\n• Conformidade com LGPD e padrões internacionais\n\nSeus dados de pagamento são processados através de gateways certificados PCI DSS, garantindo máxima segurança nas transações.',
             ),
 
             _buildSection(
               title: 'Seus Direitos e Controles',
               icon: Icons.account_circle,
-              iconColor: const VelloTokens.success,
+              iconColor: VelloTokens.success,
               content: 'Você tem controle total sobre suas informações pessoais:\n\n• Acesso: Visualizar todos os dados que temos sobre você\n• Correção: Atualizar informações incorretas ou desatualizadas\n• Exclusão: Solicitar a remoção de seus dados pessoais\n• Portabilidade: Receber uma cópia de seus dados em formato estruturado\n• Limitação: Restringir o processamento de certas informações\n• Oposição: Opor-se ao processamento para fins específicos\n• Revogação: Retirar consentimento a qualquer momento\n\nPara exercer esses direitos, entre em contato conosco através dos canais oficiais. Responderemos em até 15 dias úteis.',
             ),
 
             _buildSection(
               title: 'Retenção de Dados',
               icon: Icons.schedule,
-              iconColor: const VelloTokens.infoCyan,
+              iconColor: VelloTokens.infoCyan,
               content: 'Mantemos suas informações apenas pelo tempo necessário:\n\n• Dados de Conta: Enquanto sua conta estiver ativa\n• Histórico de Viagens: Por 5 anos para fins fiscais e de segurança\n• Dados de Pagamento: Conforme exigências regulamentares\n• Dados de Localização: Excluídos após 30 dias da viagem\n• Logs de Sistema: Mantidos por 12 meses para segurança\n\nApós os períodos de retenção, os dados são permanentemente excluídos de nossos sistemas, exceto quando a manutenção for exigida por lei.',
             ),
 
@@ -146,21 +146,21 @@ class PrivacidadeScreen extends StatelessWidget {
             _buildSection(
               title: 'Transferências Internacionais',
               icon: Icons.public,
-              iconColor: const VelloTokens.info,
+              iconColor: VelloTokens.secondary,
               content: 'Seus dados são processados principalmente no Brasil. Em casos específicos, podemos transferir dados para outros países para:\n\n• Processamento de pagamentos internacionais\n• Serviços de nuvem com padrões de segurança elevados\n• Suporte técnico especializado\n\nTodas as transferências seguem as diretrizes da LGPD e incluem salvaguardas adequadas para proteger suas informações.',
             ),
 
             _buildSection(
               title: 'Menores de Idade',
               icon: Icons.child_care,
-              iconColor: const VelloTokens.success,
+              iconColor: VelloTokens.success,
               content: 'Nossos serviços são destinados a usuários maiores de 18 anos. Não coletamos intencionalmente informações de menores de idade. Se descobrirmos que coletamos dados de um menor, tomaremos medidas imediatas para excluir essas informações.\n\nPais e responsáveis devem supervisionar o uso de dispositivos por menores e entrar em contato conosco se suspeitarem de uso não autorizado.',
             ),
 
             _buildSection(
               title: 'Atualizações desta Política',
               icon: Icons.update,
-              iconColor: const VelloTokens.infoDark,
+              iconColor: VelloTokens.secondaryDark,
               content: 'Esta Política de Privacidade pode ser atualizada periodicamente para refletir mudanças em nossos serviços ou na legislação. Quando fizermos alterações significativas:\n\n• Notificaremos você através do aplicativo\n• Enviaremos um e-mail para sua conta registrada\n• Publicaremos a nova versão com destaque\n• Manteremos versões anteriores disponíveis para consulta\n\nO uso continuado de nossos serviços após as alterações constitui aceitação da nova política.',
             ),
 
@@ -320,4 +320,3 @@ class PrivacidadeScreen extends StatelessWidget {
     );
   }
 }
-

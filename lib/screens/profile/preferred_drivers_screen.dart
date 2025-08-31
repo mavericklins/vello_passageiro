@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:vello/services/firebase_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../services/firebase_service.dart';
 import '../../theme/vello_tokens.dart';
 import '../../core/logger_service.dart';
 import '../../core/error_handler.dart';
@@ -12,7 +13,7 @@ class PreferredDriversScreen extends StatefulWidget {
 }
 
 class _PreferredDriversScreenState extends State<PreferredDriversScreen> {
-  final FirebaseService _firebaseService = FirebaseService();
+  final FirebaseService _firebaseService = FirebaseService.instance;
   final TextEditingController _driverIdController = TextEditingController();
   final TextEditingController _driverNameController = TextEditingController();
 
@@ -31,20 +32,20 @@ class _PreferredDriversScreenState extends State<PreferredDriversScreen> {
 
   Future<void> _addPreferredDriver() async {
     if (_driverIdController.text.isEmpty || _driverNameController.text.isEmpty) {
-      _showSnackBar("Por favor, preenira o ID e o nome do motorista.", Colors.red);
+      _showSnackBar("Por favor, preencha o ID e o nome do motorista.", Colors.red);
       return;
     }
 
     try {
       await _firebaseService.addPreferredDriver(
-        _driverIdController.text.trim(),
-        _driverNameController.text.trim(),
+        driverId: _driverIdController.text.trim(),
+        name: _driverNameController.text.trim(),
       );
       _showSnackBar("Motorista preferido adicionado com sucesso!", Colors.green);
       _driverIdController.clear();
       _driverNameController.clear();
     } catch (e) {
-      LoggerService.info("Erro ao adicionar motorista preferido: $e", context: context ?? "UNKNOWN");
+      LoggerService.info("Erro ao adicionar motorista preferido: $e", context: 'preferred_drivers_screen');
       _showSnackBar("Erro ao adicionar motorista preferido. Tente novamente.", Colors.red);
     }
   }
@@ -54,7 +55,7 @@ class _PreferredDriversScreenState extends State<PreferredDriversScreen> {
       await _firebaseService.removePreferredDriver(driverId);
       _showSnackBar("Motorista preferido removido com sucesso!", Colors.green);
     } catch (e) {
-      LoggerService.info("Erro ao remover motorista preferido: $e", context: context ?? "UNKNOWN");
+      LoggerService.info("Erro ao remover motorista preferido: $e", context: 'preferred_drivers_screen');
       _showSnackBar("Erro ao remover motorista preferido. Tente novamente.", Colors.red);
     }
   }
@@ -90,7 +91,7 @@ class _PreferredDriversScreenState extends State<PreferredDriversScreen> {
           icon: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const VelloTokens.gray200,
+              color: VelloTokens.gray200,
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Icon(
@@ -197,7 +198,7 @@ class _PreferredDriversScreenState extends State<PreferredDriversScreen> {
             ),
           ),
           Expanded(
-            child: StreamBuilder<List<Map<String, dynamic>>>(
+            child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
               stream: _firebaseService.getPreferredDrivers(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
@@ -206,24 +207,25 @@ class _PreferredDriversScreenState extends State<PreferredDriversScreen> {
                 if (snapshot.hasError) {
                   return Center(child: Text("Erro: ${snapshot.error}"));
                 }
-                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                   return const Center(child: Text("Nenhum motorista preferido adicionado ainda."));
                 }
                 return ListView.builder(
-                  itemCount: snapshot.data!.length,
+                  itemCount: snapshot.data!.docs.length,
                   itemBuilder: (context, index) {
-                    final driver = snapshot.data![index];
+                    final doc = snapshot.data!.docs[index];
+                    final driver = doc.data();
                     return Card(
                       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       elevation: 2,
                       child: ListTile(
                         leading: const Icon(Icons.person, color: velloBlue),
-                        title: Text(driver["driverName"]),
-                        subtitle: Text("ID: ${driver["id"]}"),
+                        title: Text(driver["name"] ?? driver["driverName"] ?? ""),
+                        subtitle: Text("ID: ${driver["driverId"] ?? doc.id}"),
                         trailing: IconButton(
                           icon: const Icon(Icons.delete, color: Colors.redAccent),
-                          onPressed: () => _removePreferredDriver(driver["id"]),
+                          onPressed: () => _removePreferredDriver(driver["driverId"] ?? doc.id),
                         ),
                       ),
                     );
@@ -237,5 +239,3 @@ class _PreferredDriversScreenState extends State<PreferredDriversScreen> {
     );
   }
 }
-
-

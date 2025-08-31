@@ -23,7 +23,7 @@ class PassengerAnalyticsService {
   /// Inicializar serviço de analytics
   static Future<void> inicializar() async {
     try {
-      LoggerService.info('📊 Inicializando serviço de analytics do passageiro...', context: context ?? 'UNKNOWN');
+      LoggerService.info('📊 Inicializando serviço de analytics do passageiro...', context: 'passenger_analytics_service');
 
       // Configurar Crashlytics
       await _configurarCrashlytics();
@@ -40,9 +40,9 @@ class PassengerAnalyticsService {
       // Iniciar monitoramento de sessão
       await _iniciarSessao();
 
-      LoggerService.success(' Serviço de analytics do passageiro inicializado', context: context ?? 'UNKNOWN');
+      LoggerService.success(' Serviço de analytics do passageiro inicializado', context: 'passenger_analytics_service');
     } catch (e) {
-      LoggerService.error(' Erro ao inicializar analytics: $e', context: context ?? 'UNKNOWN');
+      LoggerService.error(' Erro ao inicializar analytics: $e', context: 'passenger_analytics_service');
       await registrarErro('passenger_analytics_init_error', e);
     }
   }
@@ -140,7 +140,7 @@ class PassengerAnalyticsService {
         }
       }
     } catch (e) {
-      LoggerService.error(' Erro ao registrar info do dispositivo: $e', context: context ?? 'UNKNOWN');
+      LoggerService.error(' Erro ao registrar info do dispositivo: $e', context: 'passenger_analytics_service');
     }
   }
 
@@ -171,7 +171,7 @@ class PassengerAnalyticsService {
         },
       );
     } catch (e) {
-      LoggerService.error(' Erro ao iniciar sessão: $e', context: context ?? 'UNKNOWN');
+      LoggerService.error(' Erro ao iniciar sessão: $e', context: 'passenger_analytics_service');
     }
   }
 
@@ -218,7 +218,7 @@ class PassengerAnalyticsService {
         );
       }
     } catch (e) {
-      LoggerService.error(' Erro ao finalizar sessão: $e', context: context ?? 'UNKNOWN');
+      LoggerService.error(' Erro ao finalizar sessão: $e', context: 'passenger_analytics_service');
     }
   }
 
@@ -251,9 +251,9 @@ class PassengerAnalyticsService {
         'timestamp': Timestamp.now(),
       });
 
-      LoggerService.info('📊 Evento registrado: $evento', context: context ?? 'UNKNOWN');
+      LoggerService.info('📊 Evento registrado: $evento', context: 'passenger_analytics_service');
     } catch (e) {
-      LoggerService.error(' Erro ao registrar evento de viagem: $e', context: context ?? 'UNKNOWN');
+      LoggerService.error(' Erro ao registrar evento de viagem: $e', context: 'passenger_analytics_service');
     }
   }
 
@@ -282,9 +282,9 @@ class PassengerAnalyticsService {
         'timestamp': Timestamp.now(),
       });
 
-      LoggerService.info('📊 Evento personalizado registrado: $nomeEvento', context: context ?? 'UNKNOWN');
+      LoggerService.info('📊 Evento personalizado registrado: $nomeEvento', context: 'passenger_analytics_service');
     } catch (e) {
-      LoggerService.error(' Erro ao registrar evento personalizado: $e', context: context ?? 'UNKNOWN');
+      LoggerService.error(' Erro ao registrar evento personalizado: $e', context: 'passenger_analytics_service');
     }
   }
 
@@ -314,9 +314,9 @@ class PassengerAnalyticsService {
         'timestamp': Timestamp.now(),
       });
 
-      LoggerService.info('🚨 Erro registrado: $erro', context: context ?? 'UNKNOWN');
+      LoggerService.info('🚨 Erro registrado: $erro', context: 'passenger_analytics_service');
     } catch (e) {
-      LoggerService.error(' Erro ao registrar erro: $e', context: context ?? 'UNKNOWN');
+      LoggerService.error(' Erro ao registrar erro: $e', context: 'passenger_analytics_service');
     }
   }
 
@@ -374,7 +374,7 @@ class PassengerAnalyticsService {
         'timestamp': Timestamp.now(),
       });
     } catch (e) {
-      LoggerService.error(' Erro ao registrar métricas de uso: $e', context: context ?? 'UNKNOWN');
+      LoggerService.error(' Erro ao registrar métricas de uso: $e', context: 'passenger_analytics_service');
     }
   }
 
@@ -444,7 +444,7 @@ class PassengerAnalyticsService {
         'sessoes': sessoes,
       };
     } catch (e) {
-      LoggerService.error(' Erro ao obter relatório de analytics: $e', context: context ?? 'UNKNOWN');
+      LoggerService.error(' Erro ao obter relatório de analytics: $e', context: 'passenger_analytics_service');
       return {};
     }
   }
@@ -465,7 +465,7 @@ class PassengerAnalyticsService {
         }, SetOptions(merge: true));
       }
     } catch (e) {
-      LoggerService.error(' Erro ao configurar propriedades de usuário: $e', context: context ?? 'UNKNOWN');
+      LoggerService.error(' Erro ao configurar propriedades de usuário: $e', context: 'passenger_analytics_service');
     }
   }
 
@@ -496,7 +496,7 @@ class PassengerAnalyticsService {
         'timestamp': Timestamp.now(),
       });
     } catch (e) {
-      LoggerService.error(' Erro ao registrar gasto: $e', context: context ?? 'UNKNOWN');
+      LoggerService.error(' Erro ao registrar gasto: $e', context: 'passenger_analytics_service');
     }
   }
 

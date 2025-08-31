@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:vello/services/firebase_service.dart';
+import '../../services/firebase_service.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../theme/vello_tokens.dart';
 import '../../core/logger_service.dart';
@@ -13,7 +13,6 @@ class ReportIncidentScreen extends StatefulWidget {
 }
 
 class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
-  final FirebaseService _firebaseService = FirebaseService();
   final TextEditingController _descriptionController = TextEditingController();
   String? _selectedIncidentType;
   bool _isLoadingLocation = false;
@@ -28,7 +27,7 @@ class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
   ];
 
   // Cores da identidade visual Vello
-  static const Color velloBlue = VelloTokens.brandBlueAlt;
+  static const Color velloBlue = VelloTokens.brandBlue;
   static const Color velloOrange = VelloTokens.brand;
   static const Color velloLightGray = VelloTokens.gray100;
   static const Color velloCardBackground = VelloTokens.white;
@@ -50,7 +49,7 @@ class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
         _currentPosition = position;
       });
     } catch (e) {
-      LoggerService.info("Erro ao obter localização: $e", context: context ?? "UNKNOWN");
+      LoggerService.info("Erro ao obter localização: $e", context: "report_incident_screen");
       _showSnackBar("Não foi possível obter sua localização atual.", Colors.red);
     } finally {
       setState(() {
@@ -74,16 +73,16 @@ class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
     });
 
     try {
-      await _firebaseService.reportIncident(
-        _selectedIncidentType!,
-        _descriptionController.text.trim(),
-        _currentPosition!.latitude,
-        _currentPosition!.longitude,
+      await FirebaseService.instance.reportIncident(
+        type: _selectedIncidentType!,
+        description: _descriptionController.text.trim(),
+        lat: _currentPosition!.latitude,
+        lng: _currentPosition!.longitude,
       );
       _showSnackBar("Incidente reportado com sucesso!", Colors.green);
       Navigator.pop(context); // Volta para a tela anterior
     } catch (e) {
-      LoggerService.info("Erro ao reportar incidente: $e", context: context ?? "UNKNOWN");
+      LoggerService.info("Erro ao reportar incidente: $e", context: "report_incident_screen");
       _showSnackBar("Erro ao reportar incidente. Tente novamente.", Colors.red);
     } finally {
       setState(() {
@@ -129,7 +128,7 @@ class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
           icon: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const VelloTokens.gray200,
+              color: Colors.grey.shade200,
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Icon(
@@ -285,5 +284,3 @@ class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
     );
   }
 }
-
-

@@ -6,12 +6,12 @@ plugins {
 }
 
 android {
-    namespace = "com.vello.motorista"
+    namespace = "com.vello.passageiro"
     compileSdk = flutter.compileSdkVersion.toInt()
     ndkVersion = flutter.ndkVersion
 
     defaultConfig {
-        applicationId = "com.vello.motorista"
+        applicationId = "com.vello.passageiro"
         minSdk = flutter.minSdkVersion.toInt()
         targetSdk = flutter.targetSdkVersion.toInt()
         versionCode = flutter.versionCode

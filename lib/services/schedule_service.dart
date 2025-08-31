@@ -27,7 +27,7 @@ class ScheduledRide {
   final String? driverId;
   final String? driverName;
   final DateTime? confirmedAt;
-  
+
   ScheduledRide({
     required this.id,
     required this.origin,
@@ -44,7 +44,7 @@ class ScheduledRide {
     this.driverName,
     this.confirmedAt,
   });
-  
+
   factory ScheduledRide.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     return ScheduledRide(
@@ -74,7 +74,7 @@ class ScheduledRide {
           : null,
     );
   }
-  
+
   Map<String, dynamic> toFirestore() {
     return {
       'origin': origin.toMap(),
@@ -94,7 +94,7 @@ class ScheduledRide {
           : null,
     };
   }
-  
+
   String get statusDisplay {
     switch (status) {
       case ScheduleStatus.scheduled:
@@ -107,11 +107,11 @@ class ScheduledRide {
         return 'Finalizada';
     }
   }
-  
+
   String get formattedScheduledTime {
     final now = DateTime.now();
     final difference = scheduledTime.difference(now);
-    
+
     if (difference.inDays > 0) {
       return '${difference.inDays} dia${difference.inDays > 1 ? 's' : ''}';
     } else if (difference.inHours > 0) {
@@ -122,7 +122,7 @@ class ScheduledRide {
       return 'Agora';
     }
   }
-  
+
   bool get canBeCancelled {
     return status == ScheduleStatus.scheduled && 
            scheduledTime.isAfter(DateTime.now().add(Duration(minutes: 30)));
@@ -132,12 +132,12 @@ class ScheduledRide {
 class ScheduleService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   static final FirebaseAuth _auth = FirebaseAuth.instance;
-  
+
   static String get _userId => _auth.currentUser!.uid;
-  
+
   static CollectionReference get _scheduledRidesCollection =>
       _firestore.collection('corridas_agendadas');
-  
+
   // Agendar nova corrida
   static Future<String?> scheduleRide({
     required AddressModel origin,
@@ -163,18 +163,19 @@ class ScheduleService {
         notes: notes,
         couponCode: couponCode,
       );
-      
+
       final data = scheduledRide.toFirestore();
       data['passengerId'] = _userId;
-      
+
       final docRef = await _scheduledRidesCollection.add(data);
+      LoggerService.info('📅 Corrida agendada salva com sucesso', context: 'ScheduleService');
       return docRef.id;
     } catch (e) {
-      LoggerService.info('Erro ao agendar corrida: $e', context: context ?? 'UNKNOWN');
+      LoggerService.error('❌ Erro ao salvar corrida agendada: $e', context: 'ScheduleService');
       return null;
     }
   }
-  
+
   // Listar corridas agendadas do usuário
   static Stream<List<ScheduledRide>> getScheduledRides() {
     return _scheduledRidesCollection
@@ -185,7 +186,7 @@ class ScheduleService {
             .map((doc) => ScheduledRide.fromFirestore(doc))
             .toList());
   }
-  
+
   // Obter corridas por status
   static Stream<List<ScheduledRide>> getScheduledRidesByStatus(ScheduleStatus status) {
     return _scheduledRidesCollection
@@ -197,7 +198,7 @@ class ScheduleService {
             .map((doc) => ScheduledRide.fromFirestore(doc))
             .toList());
   }
-  
+
   // Cancelar corrida agendada
   static Future<bool> cancelScheduledRide(String rideId) async {
     try {
@@ -206,30 +207,30 @@ class ScheduleService {
       });
       return true;
     } catch (e) {
-      LoggerService.info('Erro ao cancelar corrida: $e', context: context ?? 'UNKNOWN');
+      LoggerService.info('Erro ao cancelar corrida: $e', context: 'ScheduleService');
       return false;
     }
   }
-  
+
   // Atualizar status da corrida
   static Future<bool> updateRideStatus(String rideId, ScheduleStatus status) async {
     try {
       final updateData = {
         'status': status.name,
       };
-      
+
       if (status == ScheduleStatus.confirmed) {
         updateData['confirmedAt'] = DateTime.now().toIso8601String();
       }
-      
+
       await _scheduledRidesCollection.doc(rideId).update(updateData);
       return true;
     } catch (e) {
-      LoggerService.info('Erro ao atualizar status: $e', context: context ?? 'UNKNOWN');
+      LoggerService.info('Erro ao atualizar status: $e', context: 'ScheduleService');
       return false;
     }
   }
-  
+
   // Obter corrida específica
   static Future<ScheduledRide?> getScheduledRide(String rideId) async {
     try {
@@ -239,11 +240,11 @@ class ScheduleService {
       }
       return null;
     } catch (e) {
-      LoggerService.info('Erro ao buscar corrida: $e', context: context ?? 'UNKNOWN');
+      LoggerService.info('Erro ao buscar corrida: $e', context: 'ScheduleService');
       return null;
     }
   }
-  
+
   // Obter próximas corridas (próximas 24h)
   static Future<List<ScheduledRide>> getUpcomingRides() async {
     try {
@@ -255,10 +256,10 @@ class ScheduleService {
           .where('scheduledTime', isGreaterThan: Timestamp.fromDate(DateTime.now()))
           .orderBy('scheduledTime')
           .get();
-          
+
       return query.docs.map((doc) => ScheduledRide.fromFirestore(doc)).toList();
     } catch (e) {
-      LoggerService.info('Erro ao buscar próximas corridas: $e', context: context ?? 'UNKNOWN');
+      LoggerService.info('Erro ao buscar próximas corridas: $e', context: 'ScheduleService');
       return [];
     }
   }

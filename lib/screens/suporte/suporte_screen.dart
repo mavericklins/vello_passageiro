@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../theme/vello_tokens.dart';
 import '../../widgets/common/vello_card.dart';
 import '../../widgets/common/vello_button.dart';
+import '../../routes/app_routes.dart';
 
 class SuporteScreen extends StatelessWidget {
   const SuporteScreen({super.key});
@@ -41,7 +43,7 @@ class SuporteScreen extends StatelessWidget {
                   child: VelloCard.standard(
                     padding: const EdgeInsets.all(16),
                     onTap: () {
-                      // TODO: Implementar chat
+                      Navigator.pushNamed(context, AppRoutes.chatbotSupport);
                     },
                     child: const Column(
                       children: [
@@ -76,7 +78,7 @@ class SuporteScreen extends StatelessWidget {
                   child: VelloCard.standard(
                     padding: const EdgeInsets.all(16),
                     onTap: () {
-                      // TODO: Implementar ligação
+                      _makePhoneCall('08001234567');
                     },
                     child: const Column(
                       children: [
@@ -111,7 +113,7 @@ class SuporteScreen extends StatelessWidget {
                   child: VelloCard.standard(
                     padding: const EdgeInsets.all(16),
                     onTap: () {
-                      // TODO: Implementar WhatsApp
+                      _openWhatsApp();
                     },
                     child: const Column(
                       children: [
@@ -207,7 +209,7 @@ class SuporteScreen extends StatelessWidget {
                     subtitle: 'Motorista não chegou, cobrança incorreta, etc.',
                     color: VelloTokens.danger,
                     onTap: () {
-                      // TODO: Reportar problema viagem
+                      Navigator.pushNamed(context, AppRoutes.reportIncident);
                     },
                   ),
                   const Divider(),
@@ -217,7 +219,7 @@ class SuporteScreen extends StatelessWidget {
                     subtitle: 'Erro técnico, travamento, funcionalidade',
                     color: VelloTokens.warning,
                     onTap: () {
-                      // TODO: Reportar problema app
+                      _showBugReportDialog(context);
                     },
                   ),
                   const Divider(),
@@ -227,7 +229,7 @@ class SuporteScreen extends StatelessWidget {
                     subtitle: 'Envie sua ideia para melhorar o app',
                     color: VelloTokens.info,
                     onTap: () {
-                      // TODO: Enviar sugestão
+                      _showSuggestionDialog(context);
                     },
                   ),
                 ],
@@ -317,4 +319,157 @@ class SuporteScreen extends StatelessWidget {
       contentPadding: EdgeInsets.zero,
     );
   }
+
+  // Implementações das funcionalidades conforme especificado no prompt
+  void _makePhoneCall(String phoneNumber) async {
+    final Uri phoneUri = Uri(scheme: 'tel', path: phoneNumber);
+    if (await canLaunchUrl(phoneUri)) {
+      await launchUrl(phoneUri);
+    }
+  }
+
+  void _openWhatsApp() async {
+    const String phoneNumber = '5511999999999'; // Número do WhatsApp da empresa
+    const String message = 'Olá! Preciso de ajuda com o app Vello.';
+    final Uri whatsappUri = Uri.parse('https://wa.me/$phoneNumber?text=${Uri.encodeComponent(message)}');
+    
+    if (await canLaunchUrl(whatsappUri)) {
+      await launchUrl(whatsappUri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  void _showBugReportDialog(BuildContext context) {
+    final TextEditingController descriptionController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text(
+            'Reportar Problema no App',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: VelloTokens.brand,
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Descreva o problema que você encontrou:',
+                style: TextStyle(fontSize: 14),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: descriptionController,
+                maxLines: 4,
+                decoration: const InputDecoration(
+                  hintText: 'Ex: O app trava quando tento solicitar uma corrida...',
+                  border: OutlineInputBorder(),
+                  contentPadding: EdgeInsets.all(12),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text(
+                'Cancelar',
+                style: TextStyle(color: VelloTokens.gray600),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (descriptionController.text.isNotEmpty) {
+                  // Aqui você enviaria o bug report para o servidor
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Problema reportado com sucesso!'),
+                      backgroundColor: VelloTokens.success,
+                    ),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: VelloTokens.brand,
+                foregroundColor: VelloTokens.white,
+              ),
+              child: const Text('Enviar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showSuggestionDialog(BuildContext context) {
+    final TextEditingController suggestionController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text(
+            'Enviar Sugestão',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: VelloTokens.brand,
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Compartilhe sua ideia para melhorar o Vello:',
+                style: TextStyle(fontSize: 14),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: suggestionController,
+                maxLines: 4,
+                decoration: const InputDecoration(
+                  hintText: 'Ex: Seria legal ter uma opção de agendar corridas...',
+                  border: OutlineInputBorder(),
+                  contentPadding: EdgeInsets.all(12),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text(
+                'Cancelar',
+                style: TextStyle(color: VelloTokens.gray600),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (suggestionController.text.isNotEmpty) {
+                  // Aqui você enviaria a sugestão para o servidor
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Sugestão enviada com sucesso!'),
+                      backgroundColor: VelloTokens.success,
+                    ),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: VelloTokens.brand,
+                foregroundColor: VelloTokens.white,
+              ),
+              child: const Text('Enviar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 }
+

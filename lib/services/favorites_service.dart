@@ -82,7 +82,7 @@ class FavoritesService {
     try {
       final collection = _favoritesCollection;
       if (collection == null) {
-        LoggerService.warning(' Usuário não autenticado para adicionar favorito', context: context ?? 'UNKNOWN');
+        LoggerService.warning(' Usuário não autenticado para adicionar favorito', context: 'favorites_service');
         return false;
       }
 
@@ -115,7 +115,7 @@ class FavoritesService {
       await collection.add(favorite.toFirestore());
       return true;
     } catch (e) {
-      LoggerService.info('Erro ao adicionar favorito: $e', context: context ?? 'UNKNOWN');
+      LoggerService.info('Erro ao adicionar favorito: $e', context: 'favorites_service');
       return false;
     }
   }
@@ -140,7 +140,7 @@ class FavoritesService {
     try {
       final collection = _favoritesCollection;
       if (collection == null) {
-        LoggerService.warning(' Usuário não autenticado para buscar favorito', context: context ?? 'UNKNOWN');
+        LoggerService.warning(' Usuário não autenticado para buscar favorito', context: 'favorites_service');
         return null;
       }
       
@@ -154,7 +154,7 @@ class FavoritesService {
       }
       return null;
     } catch (e) {
-      LoggerService.info('Erro ao buscar favorito: $e', context: context ?? 'UNKNOWN');
+      LoggerService.info('Erro ao buscar favorito: $e', context: 'favorites_service');
       return null;
     }
   }
@@ -164,14 +164,14 @@ class FavoritesService {
     try {
       final collection = _favoritesCollection;
       if (collection == null) {
-        LoggerService.warning(' Usuário não autenticado para remover favorito', context: context ?? 'UNKNOWN');
+        LoggerService.warning(' Usuário não autenticado para remover favorito', context: 'favorites_service');
         return false;
       }
       
       await collection.doc(favoriteId).delete();
       return true;
     } catch (e) {
-      LoggerService.info('Erro ao remover favorito: $e', context: context ?? 'UNKNOWN');
+      LoggerService.info('Erro ao remover favorito: $e', context: 'favorites_service');
       return false;
     }
   }
@@ -185,7 +185,7 @@ class FavoritesService {
     try {
       final collection = _favoritesCollection;
       if (collection == null) {
-        LoggerService.warning(' Usuário não autenticado para atualizar favorito', context: context ?? 'UNKNOWN');
+        LoggerService.warning(' Usuário não autenticado para atualizar favorito', context: 'favorites_service');
         return false;
       }
       
@@ -195,7 +195,7 @@ class FavoritesService {
       });
       return true;
     } catch (e) {
-      LoggerService.info('Erro ao atualizar favorito: $e', context: context ?? 'UNKNOWN');
+      LoggerService.info('Erro ao atualizar favorito: $e', context: 'favorites_service');
       return false;
     }
   }
@@ -205,7 +205,7 @@ class FavoritesService {
     try {
       final collection = _favoritesCollection;
       if (collection == null) {
-        LoggerService.warning(' Usuário não autenticado para verificar favorito', context: context ?? 'UNKNOWN');
+        LoggerService.warning(' Usuário não autenticado para verificar favorito', context: 'favorites_service');
         return false;
       }
       
@@ -216,7 +216,7 @@ class FavoritesService {
           
       return query.docs.isNotEmpty;
     } catch (e) {
-      LoggerService.info('Erro ao verificar favorito: $e', context: context ?? 'UNKNOWN');
+      LoggerService.info('Erro ao verificar favorito: $e', context: 'favorites_service');
       return false;
     }
   }

@@ -7,8 +7,7 @@ import '../services/advanced_security_service.dart';
 import '../services/secure_storage_service.dart';
 import '../theme/vello_tokens.dart';
 import '../screens/login_screen.dart';
-import '../main.dart';
-import '../theme/vello_tokens.dart';
+import '../screens/home/home_screen.dart';
 
 class SplashLoadingScreen extends StatefulWidget {
   @override
@@ -28,7 +27,7 @@ class _SplashLoadingScreenState extends State<SplashLoadingScreen>
   void initState() {
     super.initState();
     _animationController = AnimationController(
-      duration: Duration(seconds: 2),
+      duration: const Duration(seconds: 2),
       vsync: this,
     );
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(_animationController);
@@ -41,7 +40,7 @@ class _SplashLoadingScreenState extends State<SplashLoadingScreen>
     try {
       // ✅ ETAPA 3: Future.wait para inicialização sem race conditions
       await Future.wait([
-        _initFirebase(),
+        _verifyFirebase(),
         _initSecureStorage(),
         _initAuthService(), 
         _initVoiceService(),
@@ -52,7 +51,7 @@ class _SplashLoadingScreenState extends State<SplashLoadingScreen>
       final usuarioLogado = await AuthPermanenteService.isUsuarioLogado();
       
       // Navegar para tela apropriada
-      _navigateToNextScreen(usuarioLogado);
+      await _navigateToNextScreen(usuarioLogado);
       
     } catch (e) {
       setState(() {
@@ -62,41 +61,99 @@ class _SplashLoadingScreenState extends State<SplashLoadingScreen>
     }
   }
 
-  Future<void> _initFirebase() async {
-    setState(() => _currentStep = 'Inicializando Firebase...');
-    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  /// Verifica se o Firebase já foi inicializado, não tenta inicializar novamente
+  Future<void> _verifyFirebase() async {
+    setState(() => _currentStep = 'Verificando Firebase...');
+    
+    try {
+      // Tenta acessar a instância padrão do Firebase
+      Firebase.app();
+      // Se chegou aqui, o Firebase já está inicializado
+      setState(() => _currentStep = 'Firebase já inicializado ✓');
+    } on FirebaseException catch (e) {
+      if (e.code == 'no-app') {
+        // Firebase não foi inicializado, vamos inicializar
+        setState(() => _currentStep = 'Inicializando Firebase...');
+        await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+        setState(() => _currentStep = 'Firebase inicializado ✓');
+      } else {
+        // Outro erro do Firebase
+        throw Exception('Erro no Firebase: ${e.message}');
+      }
+    } catch (e) {
+      // Erro inesperado
+      throw Exception('Erro inesperado no Firebase: $e');
+    }
   }
 
   Future<void> _initSecureStorage() async {
     setState(() => _currentStep = 'Configurando armazenamento seguro...');
     await SecureStorageService.hasValidToken();
+    setState(() => _currentStep = 'Armazenamento seguro ✓');
   }
 
   Future<void> _initAuthService() async {
     setState(() => _currentStep = 'Verificando autenticação...');
     await AuthPermanenteService.isUsuarioLogado();
+    setState(() => _currentStep = 'Autenticação verificada ✓');
   }
 
   Future<void> _initVoiceService() async {
     setState(() => _currentStep = 'Carregando assistente de voz...');
-    final voiceService = AssistenteVozService();
-    await voiceService.inicializar();
+    try {
+      final voiceService = AssistenteVozService();
+      await voiceService.inicializar();
+      setState(() => _currentStep = 'Assistente de voz ✓');
+    } catch (e) {
+      // Não é crítico se o assistente de voz falhar
+      setState(() => _currentStep = 'Assistente de voz (opcional) ⚠️');
+    }
   }
 
   Future<void> _initSecurityService() async {
     setState(() => _currentStep = 'Configurando segurança...');
-    final securityService = AdvancedSecurityService();
-    await securityService.initialize();
+    try {
+      final securityService = AdvancedSecurityService();
+      await securityService.initialize();
+      setState(() => _currentStep = 'Segurança configurada ✓');
+    } catch (e) {
+      // Não é crítico se o serviço de segurança falhar
+      setState(() => _currentStep = 'Segurança (opcional) ⚠️');
+    }
   }
 
-  void _navigateToNextScreen(bool usuarioLogado) {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (context) => usuarioLogado 
-            ? PremiumFeaturesDemo() 
-            : LoginScreen(),
-      ),
-    );
+  Future<void> _navigateToNextScreen(bool usuarioLogado) async {
+    setState(() => _currentStep = 'Carregando interface...');
+    
+    // Pequeno delay para mostrar o status final
+    await Future.delayed(const Duration(milliseconds: 500));
+    
+    if (usuarioLogado) {
+      // Obter nome do usuário
+      setState(() => _currentStep = 'Carregando dados do usuário...');
+      final userName = await _getUserName();
+      
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => HomeScreen(userName: userName),
+        ),
+      );
+    } else {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => LoginScreen(),
+        ),
+      );
+    }
+  }
+
+  Future<String> _getUserName() async {
+    try {
+      final userData = await AuthPermanenteService.getUserData();
+      return userData['nome'] ?? userData['name'] ?? 'Usuário';
+    } catch (e) {
+      return 'Usuário';
+    }
   }
 
   @override
@@ -122,10 +179,10 @@ class _SplashLoadingScreenState extends State<SplashLoadingScreen>
                   color: VelloTokens.white,
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: Icon(Icons.stars, color: VelloTokens.laranja, size: 40),
+                child: const Icon(Icons.stars, color: VelloTokens.laranja, size: 40),
               ),
-              SizedBox(height: 40),
-              Text(
+              const SizedBox(height: 40),
+              const Text(
                 'Vello Passageiro Premium',
                 style: TextStyle(
                   color: VelloTokens.white,
@@ -133,11 +190,11 @@ class _SplashLoadingScreenState extends State<SplashLoadingScreen>
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              SizedBox(height: 60),
+              const SizedBox(height: 60),
               if (_hasError) ...[
                 Container(
-                  margin: EdgeInsets.symmetric(horizontal: 40),
-                  padding: EdgeInsets.all(20),
+                  margin: const EdgeInsets.symmetric(horizontal: 40),
+                  padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
                     color: Colors.red.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
@@ -145,36 +202,53 @@ class _SplashLoadingScreenState extends State<SplashLoadingScreen>
                   ),
                   child: Column(
                     children: [
-                      Icon(Icons.error, color: Colors.red, size: 32),
-                      SizedBox(height: 12),
-                      Text(
+                      const Icon(Icons.error, color: Colors.red, size: 32),
+                      const SizedBox(height: 12),
+                      const Text(
                         'Erro na Inicialização',
                         style: TextStyle(
                           color: VelloTokens.white,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      SizedBox(height: 8),
+                      const SizedBox(height: 8),
                       Text(
                         _errorMessage ?? '',
-                        style: TextStyle(color: VelloTokens.white70, fontSize: 12),
+                        style: const TextStyle(color: Color(0xB3FFFFFF), fontSize: 12),
                         textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            _hasError = false;
+                            _errorMessage = null;
+                            _currentStep = 'Tentando novamente...';
+                          });
+                          _initializeApp();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: VelloTokens.white,
+                          foregroundColor: VelloTokens.azul,
+                        ),
+                        child: const Text('Tentar Novamente'),
                       ),
                     ],
                   ),
                 ),
               ] else ...[
-                CircularProgressIndicator(
+                const CircularProgressIndicator(
                   valueColor: AlwaysStoppedAnimation<Color>(VelloTokens.white),
                   strokeWidth: 3,
                 ),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 Text(
                   _currentStep,
-                  style: TextStyle(
-                    color: VelloTokens.white70,
+                  style: const TextStyle(
+                    color: Color(0xB3FFFFFF),
                     fontSize: 16,
                   ),
+                  textAlign: TextAlign.center,
                 ),
               ],
             ],
@@ -184,3 +258,4 @@ class _SplashLoadingScreenState extends State<SplashLoadingScreen>
     );
   }
 }
+

@@ -1,0 +1,103 @@
+--- /app/lib/screens/splash_loading_screen.dart	2025-08-30 20:58:54.364548874 +0000
++++ lib/screens/splash_loading_screen.dart	2025-08-30 21:03:44.379518979 +0000
+@@ -8,7 +8,6 @@
+ import '../theme/vello_tokens.dart';
+ import '../screens/login_screen.dart';
+ import '../main.dart';
+-import '../theme/vello_tokens.dart';
+ 
+ class SplashLoadingScreen extends StatefulWidget {
+   @override
+@@ -28,7 +27,7 @@
+   void initState() {
+     super.initState();
+     _animationController = AnimationController(
+-      duration: Duration(seconds: 2),
++      duration: const Duration(seconds: 2),
+       vsync: this,
+     );
+     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(_animationController);
+@@ -93,7 +92,7 @@
+     Navigator.of(context).pushReplacement(
+       MaterialPageRoute(
+         builder: (context) => usuarioLogado 
+-            ? PremiumFeaturesDemo() 
++            ? const PremiumFeaturesDemo() 
+             : LoginScreen(),
+       ),
+     );
+@@ -122,10 +121,10 @@
+                   color: VelloTokens.white,
+                   borderRadius: BorderRadius.circular(20),
+                 ),
+-                child: Icon(Icons.stars, color: VelloTokens.laranja, size: 40),
++                child: const Icon(Icons.stars, color: VelloTokens.laranja, size: 40),
+               ),
+-              SizedBox(height: 40),
+-              Text(
++              const SizedBox(height: 40),
++              const Text(
+                 'Vello Passageiro Premium',
+                 style: TextStyle(
+                   color: VelloTokens.white,
+@@ -133,11 +132,11 @@
+                   fontWeight: FontWeight.bold,
+                 ),
+               ),
+-              SizedBox(height: 60),
++              const SizedBox(height: 60),
+               if (_hasError) ...[
+                 Container(
+-                  margin: EdgeInsets.symmetric(horizontal: 40),
+-                  padding: EdgeInsets.all(20),
++                  margin: const EdgeInsets.symmetric(horizontal: 40),
++                  padding: const EdgeInsets.all(20),
+                   decoration: BoxDecoration(
+                     color: Colors.red.withOpacity(0.1),
+                     borderRadius: BorderRadius.circular(12),
+@@ -145,34 +144,36 @@
+                   ),
+                   child: Column(
+                     children: [
+-                      Icon(Icons.error, color: Colors.red, size: 32),
+-                      SizedBox(height: 12),
+-                      Text(
++                      const Icon(Icons.error, color: Colors.red, size: 32),
++                      const SizedBox(height: 12),
++                      const Text(
+                         'Erro na Inicialização',
+                         style: TextStyle(
+                           color: VelloTokens.white,
+                           fontWeight: FontWeight.bold,
+                         ),
+                       ),
+-                      SizedBox(height: 8),
++                      const SizedBox(height: 8),
+                       Text(
+                         _errorMessage ?? '',
+-                        style: TextStyle(color: VelloTokens.white70, fontSize: 12),
++                        // CORREÇÃO: Substituir white70 inexistente por literal equivalente
++                        style: const TextStyle(color: Color(0xB3FFFFFF), fontSize: 12),
+                         textAlign: TextAlign.center,
+                       ),
+                     ],
+                   ),
+                 ),
+               ] else ...[
+-                CircularProgressIndicator(
++                const CircularProgressIndicator(
+                   valueColor: AlwaysStoppedAnimation<Color>(VelloTokens.white),
+                   strokeWidth: 3,
+                 ),
+-                SizedBox(height: 20),
++                const SizedBox(height: 20),
+                 Text(
+                   _currentStep,
+-                  style: TextStyle(
+-                    color: VelloTokens.white70,
++                  style: const TextStyle(
++                    // CORREÇÃO: Substituir white70 inexistente por literal equivalente
++                    color: Color(0xB3FFFFFF),
+                     fontSize: 16,
+                   ),
+                 ),

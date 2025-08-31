@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../theme/vello_tokens.dart';
 import '../../widgets/common/vello_card.dart';
+import '../../routes/app_routes.dart';
 
 class ConfiguracoesScreen extends StatefulWidget {
   const ConfiguracoesScreen({super.key});
@@ -99,7 +100,7 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> {
                   title: 'Alterar Senha',
                   subtitle: 'Modificar senha de acesso',
                   onTap: () {
-                    // TODO: Implementar alteração de senha
+                    Navigator.pushNamed(context, AppRoutes.alterarSenha);
                   },
                 ),
                 const Divider(),
@@ -108,7 +109,7 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> {
                   title: 'Telefone de Segurança',
                   subtitle: 'Contato de emergência',
                   onTap: () {
-                    // TODO: Implementar telefone de segurança
+                    Navigator.pushNamed(context, AppRoutes.emergencyContacts);
                   },
                 ),
                 const Divider(),
@@ -117,7 +118,7 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> {
                   title: 'Privacidade',
                   subtitle: 'Configurações de privacidade',
                   onTap: () {
-                    // TODO: Implementar configurações de privacidade
+                    Navigator.pushNamed(context, AppRoutes.privacidade);
                   },
                 ),
               ],
@@ -135,7 +136,7 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> {
                   title: 'Ajuda',
                   subtitle: 'FAQ e central de ajuda',
                   onTap: () {
-                    // TODO: Implementar ajuda
+                    Navigator.pushNamed(context, AppRoutes.suporte);
                   },
                 ),
                 const Divider(),
@@ -144,7 +145,7 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> {
                   title: 'Termos de Uso',
                   subtitle: 'Termos e condições',
                   onTap: () {
-                    // TODO: Implementar termos
+                    _showTermsDialog(context);
                   },
                 ),
                 const Divider(),
@@ -153,7 +154,7 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> {
                   title: 'Política de Privacidade',
                   subtitle: 'Como tratamos seus dados',
                   onTap: () {
-                    // TODO: Implementar política
+                    _showPrivacyDialog(context);
                   },
                 ),
                 const Divider(),
@@ -162,7 +163,7 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> {
                   title: 'Sobre o App',
                   subtitle: 'Versão 1.0.0',
                   onTap: () {
-                    // TODO: Implementar sobre
+                    Navigator.pushNamed(context, AppRoutes.sobreApp);
                   },
                   isLast: true,
                 ),
@@ -329,4 +330,137 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> {
       ],
     );
   }
+
+  // Diálogos implementados conforme especificado no prompt
+  void _showTermsDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text(
+            'Termos de Uso',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: VelloTokens.brand,
+            ),
+          ),
+          content: const SingleChildScrollView(
+            child: Text(
+              '''1. ACEITAÇÃO DOS TERMOS
+Ao utilizar o aplicativo Vello, você concorda com estes termos de uso.
+
+2. DESCRIÇÃO DO SERVIÇO
+O Vello é uma plataforma que conecta passageiros e motoristas para transporte urbano.
+
+3. RESPONSABILIDADES DO USUÁRIO
+- Fornecer informações verdadeiras
+- Respeitar motoristas e outros usuários
+- Cumprir as leis de trânsito
+
+4. PAGAMENTOS
+- Tarifas são calculadas automaticamente
+- Pagamentos processados via app
+- Cancelamentos podem gerar taxas
+
+5. PRIVACIDADE
+Seus dados são protegidos conforme nossa Política de Privacidade.
+
+6. LIMITAÇÃO DE RESPONSABILIDADE
+O Vello não se responsabiliza por danos indiretos ou consequenciais.
+
+7. MODIFICAÇÕES
+Estes termos podem ser alterados a qualquer momento.
+
+8. CONTATO
+Para dúvidas: suporte@vello.com.br''',
+              style: TextStyle(fontSize: 14),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text(
+                'Fechar',
+                style: TextStyle(color: VelloTokens.brand),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showPrivacyDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text(
+            'Política de Privacidade',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: VelloTokens.brand,
+            ),
+          ),
+          content: const SingleChildScrollView(
+            child: Text(
+              '''POLÍTICA DE PRIVACIDADE - VELLO
+
+1. COLETA DE DADOS
+Coletamos informações necessárias para fornecer nossos serviços:
+- Dados pessoais (nome, telefone, email)
+- Localização para viagens
+- Informações de pagamento
+- Histórico de viagens
+
+2. USO DOS DADOS
+Utilizamos seus dados para:
+- Conectar você com motoristas
+- Processar pagamentos
+- Melhorar nossos serviços
+- Comunicação sobre viagens
+
+3. COMPARTILHAMENTO
+Compartilhamos dados apenas:
+- Com motoristas durante viagens
+- Para processamento de pagamentos
+- Quando exigido por lei
+
+4. SEGURANÇA
+Implementamos medidas de segurança para proteger seus dados:
+- Criptografia de dados sensíveis
+- Acesso restrito às informações
+- Monitoramento de segurança
+
+5. SEUS DIREITOS
+Você pode:
+- Acessar seus dados
+- Corrigir informações
+- Solicitar exclusão
+- Revogar consentimentos
+
+6. RETENÇÃO DE DADOS
+Mantemos seus dados pelo tempo necessário para fornecer os serviços.
+
+7. CONTATO
+Para questões de privacidade: privacidade@vello.com.br
+
+Última atualização: Janeiro 2024''',
+              style: TextStyle(fontSize: 14),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text(
+                'Fechar',
+                style: TextStyle(color: VelloTokens.brand),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
 }
+

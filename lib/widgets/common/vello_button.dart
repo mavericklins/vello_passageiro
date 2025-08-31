@@ -97,6 +97,57 @@ class VelloButton extends StatefulWidget {
     this.label,
   }) : type = VelloButtonType.secondary, super(key: key);
 
+  /// Botão outlined
+  const VelloButton.outlined({
+    Key? key,
+    required this.text,
+    this.onPressed,
+    this.size = VelloButtonSize.medium,
+    this.state = VelloButtonState.normal,
+    this.isFullWidth = false,
+    this.icon,
+    this.child,
+    this.hapticFeedback = true,
+    this.backgroundColor,
+    this.color,
+    this.borderRadius,
+    this.label,
+  }) : type = VelloButtonType.outlined, super(key: key);
+
+  /// Botão ghost
+  const VelloButton.ghost({
+    Key? key,
+    required this.text,
+    this.onPressed,
+    this.size = VelloButtonSize.medium,
+    this.state = VelloButtonState.normal,
+    this.isFullWidth = false,
+    this.icon,
+    this.child,
+    this.hapticFeedback = true,
+    this.backgroundColor,
+    this.color,
+    this.borderRadius,
+    this.label,
+  }) : type = VelloButtonType.ghost, super(key: key);
+
+  /// Botão com ícone
+  const VelloButton.icon({
+    Key? key,
+    required this.text,
+    required this.icon,
+    this.onPressed,
+    this.size = VelloButtonSize.medium,
+    this.state = VelloButtonState.normal,
+    this.isFullWidth = false,
+    this.child,
+    this.hapticFeedback = true,
+    this.backgroundColor,
+    this.color,
+    this.borderRadius,
+    this.label,
+  }) : type = VelloButtonType.primary, super(key: key);
+
   @override
   State<VelloButton> createState() => _VelloButtonState();
 }

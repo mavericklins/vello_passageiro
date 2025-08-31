@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../theme/vello_tokens.dart';
 import '../../widgets/common/vello_card.dart';
 import '../../widgets/common/vello_button.dart';
+import '../../routes/app_routes.dart';
 
 class PerfilScreen extends StatelessWidget {
   const PerfilScreen({super.key});
@@ -71,7 +72,7 @@ class PerfilScreen extends StatelessWidget {
                   VelloButton.outlined(
                     text: 'Editar Perfil',
                     onPressed: () {
-                      // TODO: Implementar edição de perfil
+                      _showEditProfileDialog(context);
                     },
                   ),
                 ],
@@ -111,6 +112,56 @@ class PerfilScreen extends StatelessWidget {
                     icon: Icons.cake,
                     label: 'Data de Nascimento',
                     value: '15/03/1990',
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // Seção de Preferências conforme especificado no prompt
+            VelloCard.standard(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Preferências',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: VelloTokens.brand,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildPreferenceItem(
+                    context: context,
+                    icon: Icons.location_on,
+                    title: 'Endereços Favoritos',
+                    subtitle: 'Gerencie seus locais favoritos',
+                    onTap: () {
+                      Navigator.pushNamed(context, AppRoutes.favoriteAddresses);
+                    },
+                  ),
+                  const Divider(),
+                  _buildPreferenceItem(
+                    context: context,
+                    icon: Icons.person,
+                    title: 'Motoristas Preferidos',
+                    subtitle: 'Seus motoristas de confiança',
+                    onTap: () {
+                      Navigator.pushNamed(context, AppRoutes.preferredDrivers);
+                    },
+                  ),
+                  const Divider(),
+                  _buildPreferenceItem(
+                    context: context,
+                    icon: Icons.settings,
+                    title: 'Preferências de Viagem',
+                    subtitle: 'Configure suas preferências',
+                    onTap: () {
+                      Navigator.pushNamed(context, AppRoutes.travelPreferences);
+                    },
                   ),
                 ],
               ),
@@ -234,6 +285,68 @@ class PerfilScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildPreferenceItem({
+    required BuildContext context,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: VelloTokens.brand.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                icon,
+                color: VelloTokens.brand,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: VelloTokens.gray900,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: VelloTokens.gray600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: VelloTokens.gray500,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildStatItem({
     required IconData icon,
     required String label,
@@ -287,4 +400,43 @@ class PerfilScreen extends StatelessWidget {
       ),
     );
   }
+
+  void _showEditProfileDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text(
+            'Editar Perfil',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: VelloTokens.brand,
+            ),
+          ),
+          content: const Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Funcionalidade em desenvolvimento.'),
+              SizedBox(height: 12),
+              Text('Em breve você poderá:'),
+              Text('• Alterar foto de perfil'),
+              Text('• Editar informações pessoais'),
+              Text('• Atualizar dados de contato'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text(
+                'Fechar',
+                style: TextStyle(color: VelloTokens.brand),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
 }
+

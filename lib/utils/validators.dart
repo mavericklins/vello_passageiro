@@ -177,8 +177,8 @@ class Validators {
     // Cada palavra deve ter pelo menos 2 caracteres
     for (final word in words) {
       if (word.length < 2) return false;
-      // Deve conter apenas letras e alguns caracteres especiais
-      if (!RegExp(r'^[a-zA-ZÀ-ÿ\s\'-]+$').hasMatch(word)) return false;
+      // CORREÇÃO: Regex segura com raw string
+      if (!RegExp(r"^[A-Za-zÀ-ÿ\s'\-]+$").hasMatch(word)) return false;
     }
     
     return true;

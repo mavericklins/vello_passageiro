@@ -339,7 +339,6 @@ class _WalletScreenState extends State<WalletScreen>
             onPressed: () => _showResgateDialog(),
             icon: Icons.redeem,
             text: 'Resgatar',
-            type: VelloButtonType.primary,
           ),
         ),
         const SizedBox(width: 12),
@@ -348,7 +347,6 @@ class _WalletScreenState extends State<WalletScreen>
             onPressed: () => _showTransferirDialog(),
             icon: Icons.send,
             text: 'Transferir',
-            type: VelloButtonType.secondary,
           ),
         ),
         const SizedBox(width: 12),
@@ -357,7 +355,6 @@ class _WalletScreenState extends State<WalletScreen>
             onPressed: () => _showExtratoDialog(),
             icon: Icons.receipt_long,
             text: 'Extrato',
-            type: VelloButtonType.ghost,
           ),
         ),
       ],
@@ -394,13 +391,13 @@ class _WalletScreenState extends State<WalletScreen>
               decoration: BoxDecoration(
                 color: VelloTokens.gray50,
                 borderRadius: VelloTokens.radiusMedium,
-                border: Border.all(color: VelloTokens.gray200),
+                border: Border.all(color: Colors.grey.shade200),
               ),
               child: const Column(
                 children: [
                   Icon(
                     Icons.info_outline,
-                    color: VelloTokens.info,
+                    color: Colors.blue,
                     size: 20,
                   ),
                   SizedBox(height: 8),
@@ -603,7 +600,7 @@ class _WalletScreenState extends State<WalletScreen>
               borderRadius: VelloTokens.radiusSmall,
               child: LinearProgressIndicator(
                 value: _progressoMeta,
-                backgroundColor: VelloTokens.gray200,
+                backgroundColor: Colors.grey.shade200,
                 valueColor: AlwaysStoppedAnimation<Color>(VelloTokens.brand),
                 minHeight: 8,
               ),
@@ -679,7 +676,7 @@ class _WalletScreenState extends State<WalletScreen>
           borderRadius: VelloTokens.radiusSmall,
           child: LinearProgressIndicator(
             value: progress,
-            backgroundColor: VelloTokens.gray200,
+            backgroundColor: Colors.grey.shade200,
             valueColor: AlwaysStoppedAnimation<Color>(
               progress >= 1.0 ? VelloTokens.success : VelloTokens.warning
             ),

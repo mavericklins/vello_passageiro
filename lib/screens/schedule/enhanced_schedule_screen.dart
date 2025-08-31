@@ -4,6 +4,7 @@ import '../../services/pricing_service.dart';
 import '../../services/schedule_service.dart';
 import '../../services/promotions_service.dart';
 import '../../theme/vello_tokens.dart';
+import '../../routes/app_routes.dart';
 
 class EnhancedScheduleScreen extends StatefulWidget {
   final AddressModel origin;
@@ -1107,15 +1108,26 @@ class _EnhancedScheduleScreenState extends State<EnhancedScheduleScreen> {
       }
       
       if (mounted) {
-        Navigator.of(context).popUntil((route) => route.isFirst);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Corrida${_isRecurring ? 's' : ''} agendada${_isRecurring ? 's' : ''} com sucesso!'),
+            backgroundColor: VelloTokens.success,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+        
+        // Navegar de volta
+        Navigator.pop(context, true);
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Erro ao agendar corrida: $e'),
-            backgroundColor: Colors.red,
+            content: Text('Falha ao agendar corrida: ${e.toString()}'),
+            backgroundColor: VelloTokens.danger,
             behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
         );
       }
@@ -1136,80 +1148,51 @@ class _EnhancedScheduleScreenState extends State<EnhancedScheduleScreen> {
       scheduledTime: _scheduledDateTime,
       vehicleType: widget.selectedVehicleType,
       estimatedPrice: widget.priceEstimate.finalPrice,
-      notes: _notesController.text.trim().isNotEmpty ? _notesController.text.trim() : null,
+      notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
       couponCode: widget.appliedCoupon?.code,
     );
     
-    if (rideId != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Corrida agendada com sucesso!'),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    } else {
-      throw Exception('Falha ao agendar corrida');
+    if (rideId == null) {
+      throw Exception('Erro ao salvar agendamento');
     }
   }
 
   Future<void> _scheduleRecurringRides() async {
+    final baseDate = _selectedDate;
     int successCount = 0;
-    int totalRides = _selectedWeekdays.length * _recurringDuration;
     
-    // Agendar para cada semana
     for (int week = 0; week < _recurringDuration; week++) {
-      // Para cada dia da semana selecionado
       for (int weekday in _selectedWeekdays) {
-        // Calcular a data específica
-        DateTime rideDate = _scheduledDateTime;
-        
-        // Ajustar para a semana e dia corretos
-        int daysToAdd = (weekday - rideDate.weekday + 7) % 7 + (week * 7);
-        rideDate = rideDate.add(Duration(days: daysToAdd));
-        
-        final rideId = await ScheduleService.scheduleRide(
-          origin: widget.origin,
-          destination: widget.destination,
-          waypoints: widget.waypoints,
-          scheduledTime: DateTime(
-            rideDate.year,
-            rideDate.month,
-            rideDate.day,
-            _selectedTime.hour,
-            _selectedTime.minute,
-          ),
-          vehicleType: widget.selectedVehicleType,
-          estimatedPrice: widget.priceEstimate.finalPrice,
-          notes: _notesController.text.trim().isNotEmpty 
-              ? '${_notesController.text.trim()} (Recorrente - Semana ${week + 1})' 
-              : 'Corrida recorrente - Semana ${week + 1}',
-          couponCode: widget.appliedCoupon?.code,
+        final scheduledDate = baseDate.add(Duration(days: (week * 7) + weekday));
+        final scheduledDateTime = DateTime(
+          scheduledDate.year,
+          scheduledDate.month,
+          scheduledDate.day,
+          _selectedTime.hour,
+          _selectedTime.minute,
         );
         
-        if (rideId != null) {
-          successCount++;
+        // Apenas agendar se for no futuro
+        if (scheduledDateTime.isAfter(DateTime.now().add(Duration(minutes: 30)))) {
+          final rideId = await ScheduleService.scheduleRide(
+            origin: widget.origin,
+            destination: widget.destination,
+            waypoints: widget.waypoints,
+            scheduledTime: scheduledDateTime,
+            vehicleType: widget.selectedVehicleType,
+            estimatedPrice: widget.priceEstimate.finalPrice,
+            notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+            couponCode: widget.appliedCoupon?.code,
+          );
+          
+          if (rideId != null) {
+            successCount++;
+          }
         }
       }
     }
     
-    if (successCount == totalRides) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('$totalRides corridas agendadas com sucesso!'),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    } else if (successCount > 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('$successCount de $totalRides corridas agendadas'),
-          backgroundColor: Colors.orange,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    } else {
+    if (successCount == 0) {
       throw Exception('Nenhuma corrida foi agendada');
     }
   }

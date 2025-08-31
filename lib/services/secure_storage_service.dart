@@ -38,9 +38,9 @@ class SecureStorageService {
       final token = _generateSecureToken(userUid);
       await _secureStorage.write(key: _keyAuthToken, value: token);
       await _secureStorage.write(key: _keyLoginTimestamp, value: DateTime.now().toIso8601String());
-      LoggerService.info('🔐 Token de autenticação salvo com segurança', context: context ?? 'UNKNOWN');
+      LoggerService.info('🔐 Token de autenticação salvo com segurança', context: 'SecureStorageService');
     } catch (e) {
-      LoggerService.error(' Erro ao salvar token: $e', context: context ?? 'UNKNOWN');
+      LoggerService.error('❌ Erro ao salvar token: $e', context: 'SecureStorageService');
     }
   }
 
@@ -49,7 +49,7 @@ class SecureStorageService {
     try {
       return await _secureStorage.read(key: _keyAuthToken);
     } catch (e) {
-      LoggerService.error(' Erro ao obter token: $e', context: context ?? 'UNKNOWN');
+      LoggerService.error(' Erro ao obter token: $e', context: 'SecureStorageService');
       return null;
     }
   }
@@ -60,14 +60,14 @@ class SecureStorageService {
       if (rememberMe) {
         await _secureStorage.write(key: _keyUserEmail, value: email);
         await _secureStorage.write(key: _keyRememberMe, value: 'true');
-        LoggerService.info('📧 Dados "lembrar-me" salvos com segurança', context: context ?? 'UNKNOWN');
+        LoggerService.info('📧 Dados "lembrar-me" salvos com segurança', context: 'SecureStorageService');
       } else {
         await _secureStorage.delete(key: _keyUserEmail);
         await _secureStorage.delete(key: _keyRememberMe);
-        LoggerService.info('🗑️ Dados "lembrar-me" removidos', context: context ?? 'UNKNOWN');
+        LoggerService.info('🗑️ Dados "lembrar-me" removidos', context: 'SecureStorageService');
       }
     } catch (e) {
-      LoggerService.error(' Erro ao salvar dados lembrar-me: $e', context: context ?? 'UNKNOWN');
+      LoggerService.error(' Erro ao salvar dados lembrar-me: $e', context: 'SecureStorageService');
     }
   }
 
@@ -76,13 +76,13 @@ class SecureStorageService {
     try {
       final email = await _secureStorage.read(key: _keyUserEmail);
       final rememberMe = await _secureStorage.read(key: _keyRememberMe);
-      
+
       return {
         'email': email,
         'rememberMe': rememberMe,
       };
     } catch (e) {
-      LoggerService.error(' Erro ao obter dados lembrar-me: $e', context: context ?? 'UNKNOWN');
+      LoggerService.error(' Erro ao obter dados lembrar-me: $e', context: 'SecureStorageService');
       return {};
     }
   }
@@ -92,7 +92,7 @@ class SecureStorageService {
     try {
       final token = await getAuthToken();
       final timestamp = await _secureStorage.read(key: _keyLoginTimestamp);
-      
+
       if (token == null || timestamp == null) {
         return false;
       }
@@ -101,10 +101,10 @@ class SecureStorageService {
       final loginTime = DateTime.parse(timestamp);
       final now = DateTime.now();
       final difference = now.difference(loginTime).inDays;
-      
+
       return difference < 30;
     } catch (e) {
-      LoggerService.error(' Erro ao validar token: $e', context: context ?? 'UNKNOWN');
+      LoggerService.error(' Erro ao validar token: $e', context: 'SecureStorageService');
       return false;
     }
   }
@@ -113,9 +113,9 @@ class SecureStorageService {
   static Future<void> clearAll() async {
     try {
       await _secureStorage.deleteAll();
-      LoggerService.info('🧹 Todos os dados seguros foram limpos', context: context ?? 'UNKNOWN');
+      LoggerService.info('🧹 Todos os dados seguros foram limpos', context: 'SecureStorageService');
     } catch (e) {
-      LoggerService.error(' Erro ao limpar armazenamento seguro: $e', context: context ?? 'UNKNOWN');
+      LoggerService.error(' Erro ao limpar armazenamento seguro: $e', context: 'SecureStorageService');
     }
   }
 
@@ -125,9 +125,9 @@ class SecureStorageService {
       await _secureStorage.delete(key: _keyAuthToken);
       await _secureStorage.delete(key: _keyRefreshToken);
       await _secureStorage.delete(key: _keyLoginTimestamp);
-      LoggerService.info('🔐 Tokens de autenticação limpos', context: context ?? 'UNKNOWN');
+      LoggerService.info('🔐 Tokens de autenticação limpos', context: 'SecureStorageService');
     } catch (e) {
-      LoggerService.error(' Erro ao limpar tokens: $e', context: context ?? 'UNKNOWN');
+      LoggerService.error(' Erro ao limpar tokens: $e', context: 'SecureStorageService');
     }
   }
 
@@ -137,7 +137,7 @@ class SecureStorageService {
       final timestamp = await _secureStorage.read(key: _keyLoginTimestamp);
       return timestamp != null ? DateTime.parse(timestamp) : null;
     } catch (e) {
-      LoggerService.error(' Erro ao obter timestamp do login: $e', context: context ?? 'UNKNOWN');
+      LoggerService.error(' Erro ao obter timestamp do login: $e', context: 'SecureStorageService');
       return null;
     }
   }
